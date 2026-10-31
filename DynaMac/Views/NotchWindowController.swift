@@ -85,9 +85,14 @@ public final class NotchWindowController {
             self?.evaluateMousePosition(event: event)
         }
         
-        // Local mouse movement & drag tracking
+        // Local mouse movement & drag tracking (restricted solely to the notch panel)
         localMouseMonitor = NSEvent.addLocalMonitorForEvents(matching: [.mouseMoved, .leftMouseDragged]) { [weak self] event in
-            self?.evaluateMousePosition(event: event)
+            guard let self = self, let panel = self.panel else { return event }
+            // Never intercept or process mouse events belonging to Settings or other app windows!
+            if event.window != panel {
+                return event
+            }
+            self.evaluateMousePosition(event: event)
             return event
         }
         
