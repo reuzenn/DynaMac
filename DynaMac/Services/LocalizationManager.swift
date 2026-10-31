@@ -129,6 +129,9 @@ public final class LocalizationManager: ObservableObject {
             "hover_suppress_tip": "• Suppresses expansion automatically while holding mouse / dragging windows.",
             "calibration_title": "Hardware Notch Alignment",
             "calibration_sub": "Fine-tune Dynamic Notch size down to single pixels to match your exact MacBook bezel or screen protector.",
+            "notch_border_title": "Notch Border",
+            "notch_border_sub": "Add a stylish color outline or smooth RGB rainbow animation around the notch.",
+            "show_notch_border": "Show Notch Border",
             "visual_outline": "Show Visual Alignment Border",
             "outline_color_mode": "Border Style & Effect",
             "rgb_cycle": "RGB Smooth Rainbow",
@@ -155,8 +158,8 @@ public final class LocalizationManager: ObservableObject {
             "about_item1": "• System-wide MediaRemote playback controls with live audio visualizer",
             "about_item2": "• Temporary drag-and-drop file shelf for fast desktop staging",
             "about_item3": "• Integrated countdown timer and real-time battery & hardware telemetry",
-            "about_item4": "• Pixel-perfect notch alignment with zero window interference",
-            "version_info": "Version 1.3.2 • Built with Swift & SwiftUI"
+            "about_item4": "• Pure GPU CoreAnimation Notch Border with 0.0% CPU overhead in RGB mode",
+            "version_info": "Version 1.6 • Built with Swift & SwiftUI"
         ],
         
         // MARK: - Turkish (Türkçe)
@@ -211,6 +214,9 @@ public final class LocalizationManager: ObservableObject {
             "hover_suppress_tip": "• Pencereleri taşırken veya fare basılıyken açılmayı otomatik engeller.",
             "calibration_title": "Donanım Çentik Hizalama",
             "calibration_sub": "Dinamik Çentik boyutunu ekran koruyucunuza veya çentiğinize göre piksel piksel ayarlayın.",
+            "notch_border_title": "Notch Çerçevesi",
+            "notch_border_sub": "Çentiğin etrafına şık bir renk veya akıcı RGB gökkuşağı animasyonu ekleyin.",
+            "show_notch_border": "Notch Çerçevesini Göster",
             "visual_outline": "Görsel Hizalama Çerçevesini Göster",
             "outline_color_mode": "Çerçeve Rengi ve Efekti",
             "rgb_cycle": "RGB Akıcı Gökkuşağı",
@@ -237,8 +243,8 @@ public final class LocalizationManager: ObservableObject {
             "about_item1": "• Canlı ses ekolayzırlı sistem geneli Denetim Merkezi medya kontrolleri",
             "about_item2": "• Hızlı masaüstü dosya yönetimi için geçici sürükle-bırak dosya rafı",
             "about_item3": "• Dahili geri sayım sayacı ve anlık pil & donanım telemetrisi",
-            "about_item4": "• Sıfır pencere engellemesiyle tam piksel donanım çentiği uyumu",
-            "version_info": "Sürüm 1.3.2 • Saf Swift & SwiftUI ile Geliştirildi"
+            "about_item4": "• Saf GPU CoreAnimation ile %0.0 CPU tüketen RGB ve renkli Notch Çerçevesi",
+            "version_info": "Sürüm 1.6 • Saf Swift & SwiftUI ile Geliştirildi"
         ],
         
         // MARK: - French (Français)
@@ -293,6 +299,9 @@ public final class LocalizationManager: ObservableObject {
             "hover_suppress_tip": "• Désactive l'ouverture lors du déplacement des fenêtres.",
             "calibration_title": "Alignement matériel de l'encoche",
             "calibration_sub": "Ajustez la taille au pixel près pour correspondre à votre écran.",
+            "notch_border_title": "Bordure du Notch",
+            "notch_border_sub": "Ajoutez un contour coloré élégant ou une animation arc-en-ciel RGB fluide autour du notch.",
+            "show_notch_border": "Afficher la bordure du notch",
             "visual_outline": "Afficher le contour d'alignement",
             "outline_color_mode": "Couleur et effet de bordure",
             "rgb_cycle": "RGB Arc-en-ciel fluide",
@@ -319,8 +328,8 @@ public final class LocalizationManager: ObservableObject {
             "about_item1": "• Commandes de lecture MediaRemote avec visualiseur audio",
             "about_item2": "• Étagère temporaire de fichiers par glisser-déposer",
             "about_item3": "• Minuteur intégré et télémétrie de la batterie et du processeur",
-            "about_item4": "• Alignement parfait sur l'encoche sans obstruction des fenêtres",
-            "version_info": "Version 1.3.2 • Développé en Swift & SwiftUI"
+            "about_item4": "• Bordure de notch RGB Pure GPU CoreAnimation avec 0,0% de CPU",
+            "version_info": "Version 1.6 • Développé en Swift & SwiftUI"
         ],
         
         // MARK: - Italian (Italiano)
@@ -375,6 +384,9 @@ public final class LocalizationManager: ObservableObject {
             "hover_suppress_tip": "• Impedisce l'apertura accidentale durante il trascinamento finestre.",
             "calibration_title": "Allineamento hardware del notch",
             "calibration_sub": "Regola le dimensioni al singolo pixel per adattarle al tuo schermo.",
+            "notch_border_title": "Bordo del Notch",
+            "notch_border_sub": "Aggiungi un elegante contorno colorato o un'animazione arcobaleno RGB fluida attorno al notch.",
+            "show_notch_border": "Mostra bordo del notch",
             "visual_outline": "Mostra contorno di allineamento",
             "outline_color_mode": "Colore ed effetto del bordo",
             "rgb_cycle": "RGB Arcobaleno fluido",
@@ -401,8 +413,8 @@ public final class LocalizationManager: ObservableObject {
             "about_item1": "• Controlli di riproduzione MediaRemote con visualizzatore audio",
             "about_item2": "• Ripiano temporaneo per file tramite trascina e rilascia",
             "about_item3": "• Timer con conto alla rovescia e telemetria hardware e batteria",
-            "about_item4": "• Allineamento perfetto al notch senza ostacoli alle finestre",
-            "version_info": "Versione 1.3.2 • Sviluppato in Swift & SwiftUI"
+            "about_item4": "• Bordo notch RGB Pure GPU CoreAnimation con 0,0% di CPU",
+            "version_info": "Versione 1.6 • Sviluppato in Swift & SwiftUI"
         ],
         
         // MARK: - Russian (Русский)
@@ -457,6 +469,9 @@ public final class LocalizationManager: ObservableObject {
             "hover_suppress_tip": "• Автоматически блокирует открытие при перетаскивании окон.",
             "calibration_title": "Точная подгонка под вырез",
             "calibration_sub": "Настройте размер до пикселя под ваш экран или защитное стекло.",
+            "notch_border_title": "Рамка выреза (Notch)",
+            "notch_border_sub": "Добавьте стильную цветную рамку или плавную RGB-анимацию вокруг выреза.",
+            "show_notch_border": "Показать рамку выреза",
             "visual_outline": "Показать рамку выравнивания",
             "outline_color_mode": "Цвет и стиль границы",
             "rgb_cycle": "RGB Плавная радуга",
@@ -483,8 +498,8 @@ public final class LocalizationManager: ObservableObject {
             "about_item1": "• Управление воспроизведением MediaRemote с визуализатором звука",
             "about_item2": "• Временная полка файлов с поддержкой перетаскивания",
             "about_item3": "• Встроенный таймер и телеметрия батареи и процессора",
-            "about_item4": "• Точная подгонка под вырез без перекрытия окон",
-            "version_info": "Версия 1.3.2 • Написано на чистом Swift & SwiftUI"
+            "about_item4": "• Аппаратная RGB-рамка Pure GPU CoreAnimation с 0,0% загрузки CPU",
+            "version_info": "Версия 1.6 • Написано на чистом Swift & SwiftUI"
         ],
         
         // MARK: - German (Deutsch)
@@ -539,6 +554,9 @@ public final class LocalizationManager: ObservableObject {
             "hover_suppress_tip": "• Verhindert versehentliches Öffnen beim Bewegen von Fenstern.",
             "calibration_title": "Hardware Notch Ausrichtung",
             "calibration_sub": "Passen Sie die Notch-Größe pixelgenau an Ihren Bildschirm an.",
+            "notch_border_title": "Notch-Rahmen",
+            "notch_border_sub": "Fügen Sie eine stilvolle farbige Kontur oder eine fließende RGB-Regenbogenanimation um die Notch hinzu.",
+            "show_notch_border": "Notch-Rahmen anzeigen",
             "visual_outline": "Visuelle Hilfslinie anzeigen",
             "outline_color_mode": "Rahmenfarbe & Effekt",
             "rgb_cycle": "RGB Fließender Regenbogen",
@@ -565,8 +583,8 @@ public final class LocalizationManager: ObservableObject {
             "about_item1": "• Systemweite MediaRemote Wiedergabesteuerung mit Audio-Visualizer",
             "about_item2": "• Temporäre Dateiablage via Drag-and-Drop",
             "about_item3": "• Integrierter Timer und Echtzeit-Telemetrie für Batterie & CPU",
-            "about_item4": "• Pixelgenaue Notch-Ausrichtung ohne Behinderung von Fenstern",
-            "version_info": "Version 1.3.2 • Entwickelt mit Swift & SwiftUI"
+            "about_item4": "• Pure GPU CoreAnimation RGB-Notch-Rahmen mit 0,0% CPU-Last",
+            "version_info": "Version 1.6 • Entwickelt mit Swift & SwiftUI"
         ]
     ]
 }

@@ -113,6 +113,10 @@ struct GeneralSettingsTab: View {
     @ObservedObject var notchManager = NotchManager.shared
     @ObservedObject var l10n = LocalizationManager.shared
     
+    private let solidColors: [CalibrationColorMode] = [
+        .orange, .cyan, .green, .purple, .red, .yellow, .white
+    ]
+    
     var body: some View {
         ScrollView(.vertical, showsIndicators: false) {
             VStack(alignment: .leading, spacing: 14) {
@@ -138,61 +142,18 @@ struct GeneralSettingsTab: View {
                     }
                 }
                 
-                settingsCard {
-                    VStack(alignment: .leading, spacing: 10) {
-                        Toggle(l10n.t("launch_login"), isOn: $settings.launchAtLogin)
-                        Divider()
-                        Toggle(l10n.t("ears_status"), isOn: $settings.showCollapsedEars)
-                        Divider()
-                        Toggle(l10n.t("feat_haptics"), isOn: $settings.isHapticsEnabled)
-                    }
-                }
-                
-                settingsCard {
-                    VStack(alignment: .leading, spacing: 10) {
-                        Text(l10n.t("interaction_trigger"))
-                            .font(.headline)
-                        
-                        Toggle(l10n.t("click_to_expand"), isOn: $settings.isClickToExpandEnabled)
-                        Divider()
-                        Toggle(l10n.t("hover_to_expand"), isOn: $settings.isHoverToExpandEnabled)
-                        if settings.isHoverToExpandEnabled {
-                            Text(l10n.t("hover_suppress_tip"))
-                                .font(.caption)
-                                .foregroundColor(.secondary)
-                                .padding(.leading, 18)
-                        }
-                    }
-                }
-            }
-        }
-    }
-}
-
-// MARK: - Calibration Tab
-struct CalibrationSettingsTab: View {
-    @ObservedObject var settings = NotchSettings.shared
-    @ObservedObject var notchManager = NotchManager.shared
-    @ObservedObject var l10n = LocalizationManager.shared
-    
-    private let solidColors: [CalibrationColorMode] = [
-        .orange, .cyan, .green, .purple, .red, .yellow, .white
-    ]
-    
-    var body: some View {
-        ScrollView(.vertical, showsIndicators: false) {
-            VStack(alignment: .leading, spacing: 14) {
+                // Notch Çerçevesi (Border & RGB Chroma)
                 settingsCard {
                     VStack(alignment: .leading, spacing: 12) {
                         VStack(alignment: .leading, spacing: 4) {
-                            Text(l10n.t("calibration_title"))
+                            Text(l10n.t("notch_border_title"))
                                 .font(.headline)
-                            Text(l10n.t("calibration_sub"))
+                            Text(l10n.t("notch_border_sub"))
                                 .font(.caption)
                                 .foregroundColor(.secondary)
                         }
                         
-                        Toggle(l10n.t("visual_outline"), isOn: $settings.showCalibrationOverlay)
+                        Toggle(l10n.t("show_notch_border"), isOn: $settings.showCalibrationOverlay)
                             .padding(.top, 2)
                         
                         if settings.showCalibrationOverlay {
@@ -308,6 +269,59 @@ struct CalibrationSettingsTab: View {
                                 }
                             }
                         }
+                    }
+                }
+                
+                settingsCard {
+                    VStack(alignment: .leading, spacing: 10) {
+                        Toggle(l10n.t("launch_login"), isOn: $settings.launchAtLogin)
+                        Divider()
+                        Toggle(l10n.t("ears_status"), isOn: $settings.showCollapsedEars)
+                        Divider()
+                        Toggle(l10n.t("feat_haptics"), isOn: $settings.isHapticsEnabled)
+                    }
+                }
+                
+                settingsCard {
+                    VStack(alignment: .leading, spacing: 10) {
+                        Text(l10n.t("interaction_trigger"))
+                            .font(.headline)
+                        
+                        Toggle(l10n.t("click_to_expand"), isOn: $settings.isClickToExpandEnabled)
+                        Divider()
+                        Toggle(l10n.t("hover_to_expand"), isOn: $settings.isHoverToExpandEnabled)
+                        if settings.isHoverToExpandEnabled {
+                            Text(l10n.t("hover_suppress_tip"))
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                                .padding(.leading, 18)
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+// MARK: - Calibration Tab
+struct CalibrationSettingsTab: View {
+    @ObservedObject var settings = NotchSettings.shared
+    @ObservedObject var notchManager = NotchManager.shared
+    @ObservedObject var l10n = LocalizationManager.shared
+    
+    var body: some View {
+        ScrollView(.vertical, showsIndicators: false) {
+            VStack(alignment: .leading, spacing: 14) {
+                settingsCard {
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text(l10n.t("calibration_title"))
+                            .font(.headline)
+                        Text(l10n.t("calibration_sub"))
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                        
+                        Toggle(l10n.t("show_notch_border"), isOn: $settings.showCalibrationOverlay)
+                            .padding(.top, 4)
                     }
                 }
                 
@@ -490,7 +504,7 @@ struct AboutSettingsTab: View {
                 .font(.system(size: 42))
                 .foregroundColor(.accentColor)
             
-            Text("DynaMac")
+            Text("DynaMac v1.6")
                 .font(.title2.bold())
                 .tracking(-0.3)
             
