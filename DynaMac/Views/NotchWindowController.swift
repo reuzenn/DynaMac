@@ -117,13 +117,38 @@ public final class NotchWindowController {
         }
     }
     
+    /// Calculate the broad area where file drops will trigger the dropping state
+    public func activeDropArea() -> NSRect {
+        let geom = NotchManager.shared.currentGeometry
+        let vm = NotchViewModel.shared
+        let size: CGSize
+        if vm.state.isExpanded {
+            size = IslandLayout.size(
+                state: vm.state,
+                compact: vm.compactActivity,
+                hovering: vm.isHovering,
+                stretch: vm.stretch,
+                geometry: geom
+            )
+        } else {
+            size = IslandLayout.dropZoneSize(geom)
+        }
+        
+        let pad: CGFloat = 16
+        let originX = geom.centerX - (size.width / 2) - pad
+        let originY = geom.topY - size.height - pad
+        let width = size.width + (pad * 2)
+        let height = size.height + (pad * 2)
+        return NSRect(x: originX, y: originY, width: width, height: height)
+    }
+
     /// Calculate the exact active bounding rect of the Dynamic Island in screen coordinates
     public func currentInteractiveRect() -> NSRect {
         let geom = NotchManager.shared.currentGeometry
         let vm = NotchViewModel.shared
         
         let islandSize: CGSize
-        if vm.isFileDragActive {
+        if vm.isDropTargeted || vm.isFileDragActive {
             islandSize = IslandLayout.dropZoneSize(geom)
         } else {
             islandSize = IslandLayout.size(
@@ -135,8 +160,8 @@ public final class NotchWindowController {
             )
         }
         
-        // Add 2pt boundary padding for natural cursor approach
-        let pad: CGFloat = 2
+        // Add 4pt boundary padding for natural cursor approach
+        let pad: CGFloat = 4
         let originX = geom.centerX - (islandSize.width / 2) - pad
         let originY = geom.topY - islandSize.height - pad
         let width = islandSize.width + (pad * 2)
@@ -150,45 +175,21 @@ public final class NotchWindowController {
         let vm = NotchViewModel.shared
         let mouseLoc = NSEvent.mouseLocation
         
-        // Check for active file drags from Finder
-        if NSEvent.pressedMouseButtons != 0 {
-            let pboard = NSPasteboard(name: .drag)
-            if let types = pboard.types, types.contains(where: {
-                $0 == .fileURL || $0.rawValue.contains("file") || $0.rawValue.contains("Filenames")
-            }) {
-                if !vm.isFileDragActive {
-                    vm.isFileDragActive = true
-                }
-            }
-        } else {
-            if vm.isFileDragActive {
-                vm.isFileDragActive = false
-            }
-        }
-        
         let interactiveRect = currentInteractiveRect()
         let isInside = interactiveRect.contains(mouseLoc)
+        let inDropZone = activeDropArea().contains(mouseLoc)
         
-        if isInside {
-            // Guard: If mouse button is held down while NOT expanded and NOT dropping files,
-            // the user is dragging a window across their screen from another app!
-            // Do NOT intercept their window drag!
-            if NSEvent.pressedMouseButtons != 0 && !vm.state.isExpanded && !vm.isFileDragActive {
-                if !panel.ignoresMouseEvents {
-                    panel.ignoresMouseEvents = true
-                }
-                return
-            }
-            
-            // Cursor entered the Dynamic Island capsule
+        if isInside || inDropZone {
+            // Enable mouse events when approaching the active island or drop zone
             if panel.ignoresMouseEvents {
                 panel.ignoresMouseEvents = false
             }
-            vm.handleHoverChanged(true)
+            if isInside {
+                vm.handleHoverChanged(true)
+            }
         } else {
-            // Cursor is outside the Dynamic Island capsule
-            // Never flip ignoresMouseEvents if currently dragging inside our own window
-            if NSEvent.pressedMouseButtons == 0 {
+            // Cursor is outside the Dynamic Island capsule and drop zone
+            if !vm.isDropTargeted {
                 if !panel.ignoresMouseEvents {
                     panel.ignoresMouseEvents = true
                 }

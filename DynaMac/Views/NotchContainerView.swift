@@ -346,14 +346,19 @@ public struct NotchContainerView: View {
         let group = DispatchGroup()
         
         for provider in providers {
-            if provider.hasItemConformingToTypeIdentifier(UTType.fileURL.identifier) {
-                group.enter()
-                provider.loadItem(forTypeIdentifier: UTType.fileURL.identifier, options: nil) { item, _ in
-                    defer { group.leave() }
-                    if let data = item as? Data, let url = URL(dataRepresentation: data, relativeTo: nil) {
-                        urls.append(url)
-                    } else if let url = item as? URL {
-                        urls.append(url)
+            group.enter()
+            _ = provider.loadObject(ofClass: URL.self) { url, _ in
+                if let url = url, url.isFileURL {
+                    urls.append(url)
+                    group.leave()
+                } else {
+                    provider.loadItem(forTypeIdentifier: UTType.fileURL.identifier, options: nil) { item, _ in
+                        defer { group.leave() }
+                        if let data = item as? Data, let url = URL(dataRepresentation: data, relativeTo: nil), url.isFileURL {
+                            urls.append(url)
+                        } else if let url = item as? URL, url.isFileURL {
+                            urls.append(url)
+                        }
                     }
                 }
             }

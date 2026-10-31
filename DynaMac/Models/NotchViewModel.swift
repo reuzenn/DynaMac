@@ -296,14 +296,18 @@ public final class NotchViewModel: ObservableObject {
     // MARK: - Drop Logic
     public func handleDropTargetChanged(_ targeted: Bool) {
         guard settings.isDropShelfEnabled else { return }
+        guard self.isDropTargeted != targeted else { return }
         self.isDropTargeted = targeted
         
         if targeted {
-            withAnimation(IslandMotion.expand) {
-                self.state = .dropping
+            // Only switch to dropping capsule banner if currently collapsed
+            if case .collapsed = self.state {
+                withAnimation(IslandMotion.expand) {
+                    self.state = .dropping
+                }
             }
         } else {
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { [weak self] in
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) { [weak self] in
                 guard let self = self, !self.isDropTargeted else { return }
                 if case .dropping = self.state {
                     self.collapse()
@@ -313,6 +317,7 @@ public final class NotchViewModel: ObservableObject {
     }
     
     public func handleFilesDropped(_ urls: [URL]) {
+        guard settings.isDropShelfEnabled else { return }
         shelfService.addFiles(urls: urls)
         expand(to: .shelf)
     }

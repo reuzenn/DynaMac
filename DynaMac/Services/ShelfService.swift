@@ -10,11 +10,15 @@ public final class ShelfService: ObservableObject {
     private init() {}
     
     public func addFiles(urls: [URL]) {
-        for url in urls {
-            // Avoid duplicates
-            if !items.contains(where: { $0.url == url }) {
-                items.insert(ShelfItem(url: url), at: 0)
+        DispatchQueue.main.async {
+            for url in urls {
+                let standard = url.standardizedFileURL
+                // Avoid duplicates by comparing normalized file URLs
+                if !self.items.contains(where: { $0.url.standardizedFileURL == standard }) {
+                    self.items.insert(ShelfItem(url: standard), at: 0)
+                }
             }
+            self.objectWillChange.send()
         }
     }
     
