@@ -36,6 +36,19 @@ public struct NotchContainerView: View {
         )
     }
     
+    /// Final, non-animating layout size of the current state's content.
+    /// Content is laid out at this size from the very first frame, so it never re-flows
+    /// while the capsule mask grows around it.
+    private var restingSize: CGSize {
+        IslandLayout.size(
+            state: viewModel.state,
+            compact: viewModel.compactActivity,
+            hovering: false,
+            stretch: 0,
+            geometry: geom
+        )
+    }
+    
     public var body: some View {
         ZStack(alignment: .top) {
             // Morphing Dynamic Island Capsule
@@ -83,47 +96,56 @@ public struct NotchContainerView: View {
                     .stroke(Color.orange, lineWidth: 2)
                 }
                 
-                // Dynamic Island Content Hierarchy
-                Group {
-                    switch viewModel.state {
-                    case .collapsed:
-                        collapsedCompactEarsView
-                            .transition(.opacity)
-                        
-                    case .hud(let hudType):
-                        HUDView(hud: hudType)
-                            .transition(.opacity)
-                        
-                    case .dropping:
-                        DroppingOverlayView()
-                            .transition(.opacity)
-                        
-                    case .expanded(let activeTab):
-                        expandedDynamicIslandView(activeTab: activeTab)
-                            .transition(
-                                reduceMotion
-                                    ? .opacity
-                                    : .asymmetric(
-                                        insertion: .opacity.combined(with: .scale(scale: 0.96, anchor: .top)),
-                                        removal: .opacity
-                                    )
-                            )
-                    }
-                }
-                .frame(width: islandSize.width, height: islandSize.height, alignment: .top)
-                .clipShape(
-                    DynamicIslandShape(
-                        bottomCornerRadius: bottomRadius,
-                        isFloating: geom.isFloating,
-                        topCornerRadius: 0
-                    )
-                )
             }
             .frame(width: islandSize.width, height: islandSize.height, alignment: .top)
-            .scaleEffect(isPointerDown ? 0.98 : 1.0, anchor: .top)
-            .animation(viewModel.state.isExpanded ? IslandMotion.expand : IslandMotion.collapse, value: islandSize)
+            
+            // Dynamic Island Content Hierarchy
+            // Content is laid out inside a container that NEVER changes size (the fixed panel),
+            // and every state is pinned to its own final resting size. The animating capsule
+            // only acts as a reveal mask. This prevents SwiftUI from anchoring freshly inserted
+            // content to the leading edge of a growing frame, which made it slide in from the right.
+            Group {
+                switch viewModel.state {
+                case .collapsed:
+                    collapsedCompactEarsView
+                        .frame(width: restingSize.width, height: restingSize.height, alignment: .top)
+                        .transition(.opacity)
+                    
+                case .hud(let hudType):
+                    HUDView(hud: hudType)
+                        .frame(width: restingSize.width, height: restingSize.height, alignment: .top)
+                        .transition(.opacity)
+                    
+                case .dropping:
+                    DroppingOverlayView()
+                        .frame(width: restingSize.width, height: restingSize.height, alignment: .top)
+                        .transition(.opacity)
+                    
+                case .expanded(let activeTab):
+                    expandedDynamicIslandView(activeTab: activeTab)
+                        .transition(
+                            reduceMotion
+                                ? .opacity
+                                : .asymmetric(
+                                    insertion: .opacity.combined(with: .scale(scale: 0.96, anchor: .top)),
+                                    removal: .opacity
+                                )
+                        )
+                }
+            }
+            .frame(width: IslandLayout.panelSize.width, height: IslandLayout.panelSize.height, alignment: .top)
+            .mask(alignment: .top) {
+                DynamicIslandShape(
+                    bottomCornerRadius: bottomRadius,
+                    isFloating: geom.isFloating,
+                    topCornerRadius: 0
+                )
+                .frame(width: islandSize.width, height: islandSize.height)
+            }
         }
         .frame(width: IslandLayout.panelSize.width, height: IslandLayout.panelSize.height, alignment: .top)
+        .scaleEffect(isPointerDown ? 0.98 : 1.0, anchor: .top)
+        .animation(viewModel.state.isExpanded ? IslandMotion.expand : IslandMotion.collapse, value: islandSize)
         .contentShape(Rectangle())
         .simultaneousGesture(
             DragGesture(minimumDistance: 0)
