@@ -78,6 +78,7 @@ public struct MediaTabContent: View {
                         Capsule()
                             .fill(LinearGradient(colors: [.pink, .purple], startPoint: .leading, endPoint: .trailing))
                             .frame(width: max(0, min(geo.size.width * CGFloat(mediaService.currentTrack.progress), geo.size.width)), height: 4)
+                            .animation(.linear(duration: 0.5), value: mediaService.currentTrack.progress)
                     }
                 }
                 .frame(height: 4)
@@ -90,7 +91,7 @@ public struct MediaTabContent: View {
                     
                     Spacer()
                     
-                    Text(formatTime(mediaService.currentTrack.duration))
+                    Text(mediaService.currentTrack.duration > 0 ? formatTime(mediaService.currentTrack.duration) : "--:--")
                         .font(.system(size: 9, weight: .medium, design: .monospaced))
                         .monospacedDigit()
                         .foregroundColor(.white.opacity(0.55))

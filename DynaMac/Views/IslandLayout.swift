@@ -51,7 +51,13 @@ enum IslandLayout {
                 s.height += 4
             }
         case .hud(let hud):
-            s = CGSize(width: g.width + 2 * hudEarWidth(hud), height: g.height)
+            let hudHeight: CGFloat = g.hasPhysicalNotch ? (g.height + 28) : 56
+            let extraWidth: CGFloat
+            switch hud {
+            case .power: extraWidth = 110
+            case .volume, .brightness: extraWidth = 84
+            }
+            s = CGSize(width: max(g.width + extraWidth, 290), height: hudHeight)
         case .dropping:
             s = droppingSize(g)
         case .expanded(let tab):
@@ -72,7 +78,7 @@ enum IslandLayout {
     static func bottomRadius(state: NotchPresentationState, compact: NotchTab?, geometry g: NotchGeometry) -> CGFloat {
         switch state {
         case .collapsed: return compact == nil ? min(g.cornerRadius, g.height / 2) : 14
-        case .hud:       return 14
+        case .hud:       return 18
         case .dropping:  return 26
         case .expanded:  return 30
         }

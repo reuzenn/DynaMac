@@ -146,6 +146,14 @@ public final class NotchWindowController {
         let vm = NotchViewModel.shared
         let mouseLoc = NSEvent.mouseLocation
         
+        // Volume/Brightness/Power HUD is purely visual overlay; never intercept mouse clicks
+        if case .hud = vm.state, !vm.isDropTargeted {
+            if !panel.ignoresMouseEvents {
+                panel.ignoresMouseEvents = true
+            }
+            return
+        }
+        
         let interactiveRect = currentInteractiveRect()
         let isInside = interactiveRect.contains(mouseLoc)
         

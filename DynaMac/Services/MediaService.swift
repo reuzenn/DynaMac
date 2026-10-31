@@ -75,9 +75,9 @@ public final class MediaService: ObservableObject {
     private let mrBridge = MediaRemoteBridge.shared
     
     // Wall-clock interpolation state for live elapsed time updates
-    private var lastSnapshotDate: Date = Date()
-    private var lastBaseElapsed: Double = 0
-    private var lastPlaybackRate: Double = 0
+    private var anchorDate: Date = Date()
+    private var anchorElapsed: Double = 0
+    private var currentTrackId: String = ""
     private var tickCounter: Int = 0
     
     private init() {
@@ -108,14 +108,16 @@ public final class MediaService: ObservableObject {
     }
     
     private func tickPlaybackProgress() {
-        guard isPlaying, currentTrack.duration > 0, !currentTrack.title.isEmpty else { return }
-        let delta = Date().timeIntervalSince(lastSnapshotDate)
-        let rate = lastPlaybackRate > 0 ? lastPlaybackRate : 1.0
-        let liveElapsed = max(0, lastBaseElapsed + (delta * rate))
+        guard isPlaying, !currentTrack.title.isEmpty else { return }
+        let now = Date()
+        let delta = now.timeIntervalSince(anchorDate)
+        var liveElapsed = max(0, anchorElapsed + delta)
         
-        if liveElapsed <= currentTrack.duration {
-            self.currentTrack.elapsedTime = liveElapsed
+        if currentTrack.duration > 0 {
+            liveElapsed = min(currentTrack.duration, liveElapsed)
         }
+        
+        self.currentTrack.elapsedTime = liveElapsed
     }
     
     private func setupObservers() {
@@ -176,10 +178,9 @@ public final class MediaService: ObservableObject {
                     
                     let artist = dict["kMRMediaRemoteNowPlayingInfoArtist"] as? String ?? ""
                     let album = dict["kMRMediaRemoteNowPlayingInfoAlbum"] as? String ?? ""
-                    let duration = dict["kMRMediaRemoteNowPlayingInfoDuration"] as? Double ?? 0
-                    let elapsed = dict["kMRMediaRemoteNowPlayingInfoElapsedTime"] as? Double ?? 0
-                    let rate = dict["kMRMediaRemoteNowPlayingInfoPlaybackRate"] as? Double
-                    let timestamp = (dict["kMRMediaRemoteNowPlayingInfoTimestamp"] as? Date) ?? Date()
+                    let duration = (dict["kMRMediaRemoteNowPlayingInfoDuration"] as? NSNumber)?.doubleValue ?? (dict["kMRMediaRemoteNowPlayingInfoDuration"] as? Double ?? 0)
+                    let elapsed = (dict["kMRMediaRemoteNowPlayingInfoElapsedTime"] as? NSNumber)?.doubleValue ?? (dict["kMRMediaRemoteNowPlayingInfoElapsedTime"] as? Double ?? 0)
+                    let rate = (dict["kMRMediaRemoteNowPlayingInfoPlaybackRate"] as? NSNumber)?.doubleValue ?? (dict["kMRMediaRemoteNowPlayingInfoPlaybackRate"] as? Double)
                     
                     var artworkImage: NSImage? = nil
                     if let artData = dict["kMRMediaRemoteNowPlayingInfoArtworkData"] as? Data {
@@ -196,13 +197,49 @@ public final class MediaService: ObservableObject {
                             playing = isPlayingApp
                         }
                         
-                        self.lastBaseElapsed = elapsed
-                        self.lastSnapshotDate = timestamp
-                        self.lastPlaybackRate = playing ? (rate ?? 1.0) : 0.0
+                        let trackId = "\(title)|\(artist)|\(Int(duration))"
+                        let isNewTrack = (trackId != self.currentTrackId)
+                        let now = Date()
                         
-                        // Local wall-clock interpolation so elapsed time starts immediately at live position
-                        let delta = Date().timeIntervalSince(timestamp)
-                        let currentElapsed = playing ? max(0, min(duration > 0 ? duration : Double.infinity, elapsed + (delta * (rate ?? 1.0)))) : elapsed
+                        if isNewTrack {
+                            self.currentTrackId = trackId
+                            self.anchorDate = now
+                            if elapsed > 0 && (duration <= 0 || elapsed < duration) {
+                                self.anchorElapsed = elapsed
+                            } else {
+                                self.anchorElapsed = 0
+                            }
+                        } else {
+                            // Same track: if the user scrubbed in the browser/player, re-anchor to new position
+                            let currentEstimated = self.anchorElapsed + (self.isPlaying ? now.timeIntervalSince(self.anchorDate) : 0)
+                            if elapsed > 0 && abs(elapsed - currentEstimated) > 2.5 {
+                                self.anchorElapsed = elapsed
+                                self.anchorDate = now
+                            }
+                        }
+                        
+                        // Play/Pause state transition
+                        if playing != self.isPlaying {
+                            if playing {
+                                // Resumed
+                                self.anchorElapsed = self.currentTrack.elapsedTime
+                                self.anchorDate = now
+                            } else {
+                                // Paused
+                                let delta = now.timeIntervalSince(self.anchorDate)
+                                self.anchorElapsed = max(0, self.anchorElapsed + delta)
+                                self.anchorDate = now
+                            }
+                        }
+                        
+                        let computedElapsed: Double
+                        if playing {
+                            let delta = now.timeIntervalSince(self.anchorDate)
+                            let live = self.anchorElapsed + delta
+                            computedElapsed = duration > 0 ? min(duration, max(0, live)) : max(0, live)
+                        } else {
+                            computedElapsed = self.anchorElapsed
+                        }
                         
                         let track = MediaTrack(
                             title: title,
@@ -211,7 +248,7 @@ public final class MediaService: ObservableObject {
                             artwork: artworkImage,
                             isPlaying: playing,
                             duration: duration,
-                            elapsedTime: currentElapsed,
+                            elapsedTime: computedElapsed,
                             appName: "Control Center"
                         )
                         self.applyTrack(track)
@@ -285,6 +322,9 @@ public final class MediaService: ObservableObject {
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) { [weak self] in
                     self?.updatePlaybackState()
                 }
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.45) { [weak self] in
+                    self?.updatePlaybackState()
+                }
                 return
             }
         }
@@ -306,7 +346,12 @@ public final class MediaService: ObservableObject {
         if mrBridge.isAvailable {
             let sent = mrBridge.sendCommand(4) // MRMediaRemoteCommandNextTrack
             if sent {
+                self.anchorElapsed = 0
+                self.anchorDate = Date()
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) { [weak self] in
+                    self?.updatePlaybackState()
+                }
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in
                     self?.updatePlaybackState()
                 }
                 return
@@ -328,7 +373,12 @@ public final class MediaService: ObservableObject {
         if mrBridge.isAvailable {
             let sent = mrBridge.sendCommand(5) // MRMediaRemoteCommandPreviousTrack
             if sent {
+                self.anchorElapsed = 0
+                self.anchorDate = Date()
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) { [weak self] in
+                    self?.updatePlaybackState()
+                }
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in
                     self?.updatePlaybackState()
                 }
                 return
@@ -396,9 +446,8 @@ public final class MediaService: ObservableObject {
             }
         }
         
-        self.lastBaseElapsed = currentTime
-        self.lastSnapshotDate = Date()
-        self.lastPlaybackRate = isPlaying ? 1.0 : 0.0
+        self.anchorElapsed = currentTime
+        self.anchorDate = Date()
         
         return MediaTrack(
             title: title,
