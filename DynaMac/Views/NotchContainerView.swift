@@ -87,9 +87,10 @@ public struct NotchContainerView: View {
                 )
                 
                 // Hardware calibration guide (Custom color palette or smooth RGB animation)
+                // When collapsed (expand is closed), cap RGB cycle to 60 Hz (1.0 / 60.0) to save CPU/GPU and battery
                 if settings.showCalibrationOverlay {
                     if settings.calibrationColor == .rgb {
-                        TimelineView(.animation) { timeline in
+                        TimelineView(.animation(minimumInterval: viewModel.state.isExpanded ? nil : (1.0 / 60.0))) { timeline in
                             let elapsed = timeline.date.timeIntervalSinceReferenceDate
                             let duration = max(0.5, settings.calibrationRGBSpeed.duration)
                             let progress = (elapsed.truncatingRemainder(dividingBy: duration)) / duration
@@ -107,7 +108,7 @@ public struct NotchContainerView: View {
                                 ),
                                 lineWidth: 2.5
                             )
-                            .shadow(color: Color.purple.opacity(0.35), radius: 3)
+                            .shadow(color: Color.purple.opacity(0.25), radius: 2)
                         }
                     } else {
                         DynamicIslandShape(
