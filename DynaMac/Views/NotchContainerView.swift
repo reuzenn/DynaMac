@@ -100,9 +100,16 @@ public struct NotchContainerView: View {
                         
                     case .expanded(let activeTab):
                         expandedDynamicIslandView(activeTab: activeTab)
-                            .transition(IslandMotion.content(reduceMotion))
+                            .transition(.opacity)
                     }
                 }
+                .clipShape(
+                    DynamicIslandShape(
+                        bottomCornerRadius: bottomRadius,
+                        isFloating: geom.isFloating,
+                        topCornerRadius: 0
+                    )
+                )
             }
             .frame(width: islandSize.width, height: islandSize.height, alignment: .top)
             .scaleEffect(isPointerDown ? 0.98 : 1.0, anchor: .top)
@@ -290,6 +297,8 @@ public struct NotchContainerView: View {
                 }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .transition(.opacity)
+            .animation(.easeInOut(duration: 0.2), value: activeTab)
             
             // Bottom Pagination Dots (iPhone Dynamic Island subtle page dots)
             HStack(spacing: 6) {

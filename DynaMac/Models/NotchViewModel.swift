@@ -140,12 +140,15 @@ public final class NotchViewModel: ObservableObject {
             self.activeTab = compact
         } else if mediaService.isPlaying {
             self.activeTab = .media
-        } else if !shelfService.items.isEmpty {
-            self.activeTab = .shelf
         } else if timerService.isRunning {
             self.activeTab = .timer
+        } else if !shelfService.items.isEmpty {
+            self.activeTab = .shelf
+        } else if batteryService.isCharging {
+            self.activeTab = .battery
         } else {
-            self.activeTab = .media
+            // When nothing is actively running, retain the user's selected tab!
+            // Never force .media when music is not even playing.
         }
         
         withAnimation(IslandMotion.expand) {
