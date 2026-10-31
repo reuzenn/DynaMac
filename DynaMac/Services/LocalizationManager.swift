@@ -150,7 +150,7 @@ public final class LocalizationManager: ObservableObject {
             "about_item2": "• Temporary drag-and-drop file shelf for fast desktop staging",
             "about_item3": "• Integrated countdown timer and real-time battery & hardware telemetry",
             "about_item4": "• Pixel-perfect notch alignment with zero window interference",
-            "version_info": "Version 1.0 • Built with Swift & SwiftUI"
+            "version_info": "Version 1.2 • Built with Swift & SwiftUI"
         ],
         
         // MARK: - Turkish (Türkçe)
@@ -226,7 +226,7 @@ public final class LocalizationManager: ObservableObject {
             "about_item2": "• Hızlı masaüstü dosya yönetimi için geçici sürükle-bırak dosya rafı",
             "about_item3": "• Dahili geri sayım sayacı ve anlık pil & donanım telemetrisi",
             "about_item4": "• Sıfır pencere engellemesiyle tam piksel donanım çentiği uyumu",
-            "version_info": "Sürüm 1.0 • Saf Swift & SwiftUI ile Geliştirildi"
+            "version_info": "Sürüm 1.2 • Saf Swift & SwiftUI ile Geliştirildi"
         ],
         
         // MARK: - French (Français)
@@ -302,7 +302,7 @@ public final class LocalizationManager: ObservableObject {
             "about_item2": "• Étagère temporaire de fichiers par glisser-déposer",
             "about_item3": "• Minuteur intégré et télémétrie de la batterie et du processeur",
             "about_item4": "• Alignement parfait sur l'encoche sans obstruction des fenêtres",
-            "version_info": "Version 1.0 • Développé en Swift & SwiftUI"
+            "version_info": "Version 1.2 • Développé en Swift & SwiftUI"
         ],
         
         // MARK: - Italian (Italiano)
@@ -378,7 +378,7 @@ public final class LocalizationManager: ObservableObject {
             "about_item2": "• Ripiano temporaneo per file tramite trascina e rilascia",
             "about_item3": "• Timer con conto alla rovescia e telemetria hardware e batteria",
             "about_item4": "• Allineamento perfetto al notch senza ostacoli alle finestre",
-            "version_info": "Versione 1.0 • Sviluppato in Swift & SwiftUI"
+            "version_info": "Versione 1.2 • Sviluppato in Swift & SwiftUI"
         ],
         
         // MARK: - Russian (Русский)
@@ -454,7 +454,7 @@ public final class LocalizationManager: ObservableObject {
             "about_item2": "• Временная полка файлов с поддержкой перетаскивания",
             "about_item3": "• Встроенный таймер и телеметрия батареи и процессора",
             "about_item4": "• Точная подгонка под вырез без перекрытия окон",
-            "version_info": "Версия 1.0 • Написано на чистом Swift & SwiftUI"
+            "version_info": "Версия 1.2 • Написано на чистом Swift & SwiftUI"
         ],
         
         // MARK: - German (Deutsch)
@@ -530,7 +530,7 @@ public final class LocalizationManager: ObservableObject {
             "about_item2": "• Temporäre Dateiablage via Drag-and-Drop",
             "about_item3": "• Integrierter Timer und Echtzeit-Telemetrie für Batterie & CPU",
             "about_item4": "• Pixelgenaue Notch-Ausrichtung ohne Behinderung von Fenstern",
-            "version_info": "Version 1.0 • Entwickelt mit Swift & SwiftUI"
+            "version_info": "Version 1.2 • Entwickelt mit Swift & SwiftUI"
         ]
     ]
 }
