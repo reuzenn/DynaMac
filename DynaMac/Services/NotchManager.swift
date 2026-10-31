@@ -186,25 +186,36 @@ public final class NotchManager: ObservableObject {
         return false
     }
     
+    public static var cpuBrand: String {
+        var size = 0
+        sysctlbyname("machdep.cpu.brand_string", nil, &size, nil, 0)
+        guard size > 0 else { return "Apple Silicon" }
+        var buffer = [CChar](repeating: 0, count: size)
+        sysctlbyname("machdep.cpu.brand_string", &buffer, &size, nil, 0)
+        let brand = String(cString: buffer).trimmingCharacters(in: .whitespacesAndNewlines)
+        return brand.isEmpty ? "Apple Silicon" : brand
+    }
+    
     private func identifyDevice(for screen: NSScreen, hasNotch: Bool) -> String {
+        let cpu = NotchManager.cpuBrand
         guard hasNotch else {
-            return "External / Non-Notch Display (\(Int(screen.frame.width))x\(Int(screen.frame.height)))"
+            return "\(cpu) • External Display"
         }
         
         let width = screen.frame.width
         let height = screen.frame.height
         
-        // Approximate point resolutions on MacBook displays
+        // Match model screen size and attach detected CPU model
         if width >= 1700 && height >= 1080 {
-            return "MacBook Pro 16\" (Liquid Retina XDR)"
+            return "MacBook Pro 16\" • \(cpu)"
         } else if width >= 1500 && height >= 950 {
-            return "MacBook Pro 14\" (Liquid Retina XDR)"
+            return "MacBook Pro 14\" • \(cpu)"
         } else if width >= 1650 {
-            return "MacBook Air 15.3\" (Liquid Retina)"
+            return "MacBook Air 15.3\" • \(cpu)"
         } else if width >= 1280 && width <= 1500 {
-            return "MacBook Air 13.6\" (Liquid Retina)"
+            return "MacBook Air 13.6\" • \(cpu)"
         } else {
-            return "Apple Silicon MacBook with Notch"
+            return "MacBook • \(cpu)"
         }
     }
 }

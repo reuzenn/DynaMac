@@ -146,15 +146,6 @@ public final class NotchWindowController {
         let vm = NotchViewModel.shared
         let mouseLoc = NSEvent.mouseLocation
         
-        // Guard: If mouse button is held down while collapsed and not in a drop session,
-        // the user is dragging a window from another application. Never intercept window movements.
-        if NSEvent.pressedMouseButtons != 0 && !vm.state.isExpanded && !vm.isDropTargeted {
-            if !panel.ignoresMouseEvents {
-                panel.ignoresMouseEvents = true
-            }
-            return
-        }
-        
         let interactiveRect = currentInteractiveRect()
         let isInside = interactiveRect.contains(mouseLoc)
         

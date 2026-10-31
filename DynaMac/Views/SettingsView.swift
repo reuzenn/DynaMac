@@ -309,6 +309,10 @@ public struct SettingsView: View {
             Text(l10n.t("version_info"))
                 .font(.caption2)
                 .foregroundColor(.secondary)
+            
+            Text("made by reuzen with ❤️")
+                .font(.caption)
+                .foregroundColor(.secondary)
         }
         .padding(.vertical, 14)
     }
