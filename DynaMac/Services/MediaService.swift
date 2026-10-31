@@ -73,6 +73,16 @@ public final class MediaService: ObservableObject {
     private var pollTimer: Timer?
     private let mrBridge = MediaRemoteBridge.shared
     
+    /// Serial background queue for all AppleScript / network work.
+    /// Apple Events and artwork downloads block for tens to hundreds of milliseconds
+    /// (or longer when the target app is busy), so they must never run on the main thread.
+    private let scriptQueue = DispatchQueue(label: "com.reuzen.DynaMac.media-scripts", qos: .utility)
+    /// Main-thread only. Prevents fallback probes from piling up if a target app is slow to respond.
+    private var isFallbackInFlight = false
+    /// scriptQueue only. Artwork is re-fetched only when the track (or its artwork URL) changes.
+    private var artworkCacheKey: String = ""
+    private var artworkCacheImage: NSImage?
+    
     // Wall-clock interpolation state for live elapsed time updates
     private var anchorDate: Date = Date()
     private var anchorElapsed: Double = 0
@@ -266,35 +276,63 @@ public final class MediaService: ObservableObject {
     }
     
     private func fallbackPlaybackState() {
+        guard !isFallbackInFlight else { return }
+        isFallbackInFlight = true
+        
+        scriptQueue.async { [weak self] in
+            guard let self = self else { return }
+            let track = self.probeFallbackSources()
+            
+            DispatchQueue.main.async {
+                self.isFallbackInFlight = false
+                if let track = track {
+                    // Re-anchor the wall-clock interpolation to the position reported by the player.
+                    self.currentTrackId = "\(track.title)|\(track.artist)|\(Int(track.duration))"
+                    self.anchorElapsed = track.elapsedTime
+                    self.anchorDate = Date()
+                    self.currentTrack = track
+                    self.isPlaying = track.isPlaying
+                } else if self.currentTrack.isPlaying || !self.currentTrack.title.isEmpty {
+                    self.currentTrack = .empty
+                    self.isPlaying = false
+                }
+            }
+        }
+    }
+    
+    /// Runs on `scriptQueue`. Queries Safari (YouTube), Spotify and Apple Music in priority order.
+    private func probeFallbackSources() -> MediaTrack? {
         // Fallback 1: Dedicated Safari YouTube inspection
         if let safariTrack = fetchSafariYouTubeInfo() {
-            applyTrack(safariTrack)
-            return
+            return safariTrack
         }
         
         // Fallback 2: Spotify
         if isAppRunning("com.spotify.client") {
             if let track = fetchSpotifyInfo(), track.isPlaying || !track.title.isEmpty {
-                applyTrack(track)
-                return
+                return track
             }
         }
         
         // Fallback 3: Apple Music
         if isAppRunning("com.apple.Music") {
             if let track = fetchAppleMusicInfo(), track.isPlaying || !track.title.isEmpty {
-                applyTrack(track)
-                return
+                return track
             }
         }
         
-        // If nothing is playing
-        DispatchQueue.main.async {
-            if self.currentTrack.isPlaying || !self.currentTrack.title.isEmpty {
-                self.currentTrack = .empty
-                self.isPlaying = false
-            }
+        return nil
+    }
+    
+    /// Runs on `scriptQueue`. Returns the cached artwork for `key`, loading it only when the key changes.
+    private func cachedArtwork(forKey key: String, loader: () -> NSImage?) -> NSImage? {
+        if key == artworkCacheKey {
+            return artworkCacheImage
         }
+        let image = loader()
+        artworkCacheKey = key
+        artworkCacheImage = image
+        return image
     }
     
     private func applyTrack(_ track: MediaTrack) {
@@ -325,11 +363,11 @@ public final class MediaService: ObservableObject {
         
         // Fallback
         if isAppRunning("com.spotify.client") {
-            runAppleScript("tell application \"Spotify\" to playpause")
+            runScriptInBackground("tell application \"Spotify\" to playpause")
         } else if isAppRunning("com.apple.Music") {
-            runAppleScript("tell application \"Music\" to playpause")
+            runScriptInBackground("tell application \"Music\" to playpause")
         } else if isAppRunning("com.apple.Safari") {
-            toggleSafariVideo()
+            scriptQueue.async { [weak self] in self?.toggleSafariVideo() }
         }
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) { [weak self] in
             self?.updatePlaybackState()
@@ -354,9 +392,9 @@ public final class MediaService: ObservableObject {
         
         // Fallback
         if isAppRunning("com.spotify.client") {
-            runAppleScript("tell application \"Spotify\" to next track")
+            runScriptInBackground("tell application \"Spotify\" to next track")
         } else if isAppRunning("com.apple.Music") {
-            runAppleScript("tell application \"Music\" to next track")
+            runScriptInBackground("tell application \"Music\" to next track")
         }
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) { [weak self] in
             self?.updatePlaybackState()
@@ -381,9 +419,9 @@ public final class MediaService: ObservableObject {
         
         // Fallback
         if isAppRunning("com.spotify.client") {
-            runAppleScript("tell application \"Spotify\" to previous track")
+            runScriptInBackground("tell application \"Spotify\" to previous track")
         } else if isAppRunning("com.apple.Music") {
-            runAppleScript("tell application \"Music\" to previous track")
+            runScriptInBackground("tell application \"Music\" to previous track")
         }
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) { [weak self] in
             self?.updatePlaybackState()
@@ -430,18 +468,14 @@ public final class MediaService: ObservableObject {
             duration = Double(parts[4].trimmingCharacters(in: .whitespacesAndNewlines)) ?? 0
         }
         
-        // Extract video id for thumbnail
+        // Extract video id for thumbnail (downloaded once per video, never on the main thread)
         var artwork: NSImage? = nil
         if let url = URL(string: urlString),
            let comps = URLComponents(url: url, resolvingAgainstBaseURL: false),
-           let videoId = comps.queryItems?.first(where: { $0.name == "v" })?.value {
-            if let thumbUrl = URL(string: "https://img.youtube.com/vi/\(videoId)/hqdefault.jpg") {
-                artwork = downloadArtwork(from: thumbUrl)
-            }
+           let videoId = comps.queryItems?.first(where: { $0.name == "v" })?.value,
+           let thumbUrl = URL(string: "https://img.youtube.com/vi/\(videoId)/hqdefault.jpg") {
+            artwork = cachedArtwork(forKey: "yt:\(videoId)") { downloadArtwork(from: thumbUrl) }
         }
-        
-        self.anchorElapsed = currentTime
-        self.anchorDate = Date()
         
         return MediaTrack(
             title: title,
@@ -500,7 +534,7 @@ public final class MediaService: ObservableObject {
         
         var artwork: NSImage? = nil
         if parts.count >= 7, let url = URL(string: parts[6]), !parts[6].isEmpty {
-            artwork = downloadArtwork(from: url)
+            artwork = cachedArtwork(forKey: "spotify:\(parts[6])") { downloadArtwork(from: url) }
         }
         
         return MediaTrack(
@@ -540,7 +574,7 @@ public final class MediaService: ObservableObject {
         let duration = Double(parts[4]) ?? 0
         let elapsed = Double(parts[5]) ?? 0
         
-        let artwork = fetchAppleMusicArtwork()
+        let artwork = cachedArtwork(forKey: "music:\(title)|\(artist)|\(album)") { fetchAppleMusicArtwork() }
         
         return MediaTrack(
             title: title,
@@ -577,6 +611,13 @@ public final class MediaService: ObservableObject {
             }
         }
         return nil
+    }
+    
+    /// Fire-and-forget AppleScript on the serial script queue (keeps the main thread responsive).
+    private func runScriptInBackground(_ script: String) {
+        scriptQueue.async { [weak self] in
+            self?.runAppleScript(script)
+        }
     }
     
     @discardableResult
