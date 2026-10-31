@@ -43,10 +43,12 @@ public final class SettingsWindowController: NSObject {
 public final class StatusBarController: NSObject, NSMenuDelegate {
     public static let shared = StatusBarController()
     
+    public private(set) var isMenuOpen: Bool = false
     private var statusItem: NSStatusItem?
     
-    // The menu is built once and only its titles are refreshed. Replacing the NSMenu
-    // instance while it is opening interrupts menu tracking and causes stutter.
+    // The menu is built once and updated only when opening or when language changes.
+    // Never implement menuNeedsUpdate as AppKit calls it on every mouse move,
+    // causing continuous layout invalidations and 1 FPS hover stutter.
     private let menu = NSMenu()
     private let titleItem = NSMenuItem(title: "", action: nil, keyEquivalent: "")
     private let deviceItem = NSMenuItem(title: "", action: nil, keyEquivalent: "")
@@ -100,18 +102,32 @@ public final class StatusBarController: NSObject, NSMenuDelegate {
         menu.addItem(quitItem)
     }
     
-    /// Called by AppKit right before the menu is displayed; only cheap title updates happen here.
-    public func menuNeedsUpdate(_ menu: NSMenu) {
+    public func menuWillOpen(_ menu: NSMenu) {
+        isMenuOpen = true
         updateMenu()
+    }
+    
+    public func menuDidClose(_ menu: NSMenu) {
+        isMenuOpen = false
     }
     
     public func updateMenu() {
         let l10n = LocalizationManager.shared
-        titleItem.title = l10n.t("menu_active")
-        deviceItem.title = NotchManager.shared.detectedDeviceName
-        toggleItem.title = NotchViewModel.shared.state.isExpanded ? l10n.t("menu_collapse") : l10n.t("menu_expand")
-        settingsItem.title = l10n.t("menu_settings")
-        quitItem.title = l10n.t("menu_quit")
+        
+        let activeTitle = l10n.t("menu_active")
+        if titleItem.title != activeTitle { titleItem.title = activeTitle }
+        
+        let devName = NotchManager.shared.detectedDeviceName
+        if deviceItem.title != devName { deviceItem.title = devName }
+        
+        let toggleTitle = NotchViewModel.shared.state.isExpanded ? l10n.t("menu_collapse") : l10n.t("menu_expand")
+        if toggleItem.title != toggleTitle { toggleItem.title = toggleTitle }
+        
+        let settingsTitle = l10n.t("menu_settings")
+        if settingsItem.title != settingsTitle { settingsItem.title = settingsTitle }
+        
+        let quitTitle = l10n.t("menu_quit")
+        if quitItem.title != quitTitle { quitItem.title = quitTitle }
     }
     
     @objc private func toggleNotch() {

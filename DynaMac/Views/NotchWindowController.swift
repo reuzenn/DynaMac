@@ -82,13 +82,16 @@ public final class NotchWindowController {
     private func setupEventMonitors() {
         // Global mouse movement & drag tracking
         globalMouseMonitor = NSEvent.addGlobalMonitorForEvents(matching: [.mouseMoved, .leftMouseDragged]) { [weak self] event in
+            guard !StatusBarController.shared.isMenuOpen else { return }
             self?.evaluateMousePosition(event: event)
         }
         
         // Local mouse movement & drag tracking (restricted solely to the notch panel)
         localMouseMonitor = NSEvent.addLocalMonitorForEvents(matching: [.mouseMoved, .leftMouseDragged]) { [weak self] event in
+            // When status bar dropdown menu is open, let AppKit track it at full native speed with zero interference
+            guard !StatusBarController.shared.isMenuOpen else { return event }
             guard let self = self, let panel = self.panel else { return event }
-            // Never intercept or process mouse events belonging to Settings or other app windows!
+            // Never intercept or process mouse events belonging to Settings, Status Bar Menu, or other windows!
             if event.window != panel {
                 return event
             }
@@ -98,6 +101,7 @@ public final class NotchWindowController {
         
         // Outside click detector when expanded
         globalClickMonitor = NSEvent.addGlobalMonitorForEvents(matching: [.leftMouseDown, .rightMouseDown]) { [weak self] event in
+            guard !StatusBarController.shared.isMenuOpen else { return }
             guard let self = self else { return }
             let vm = NotchViewModel.shared
             if vm.state.isExpanded {
@@ -147,6 +151,8 @@ public final class NotchWindowController {
     }
     
     private func evaluateMousePosition(event: NSEvent) {
+        // If status bar menu is open, never run notch hit-testing
+        if StatusBarController.shared.isMenuOpen { return }
         guard let panel = panel else { return }
         let vm = NotchViewModel.shared
         let mouseLoc = NSEvent.mouseLocation
@@ -160,9 +166,15 @@ public final class NotchWindowController {
             return
         }
         
-        // Fast-path: When collapsed, if the cursor is anywhere below the menu bar notch region,
+        // Fast-path: When collapsed, if the cursor is anywhere below the menu bar notch region
+        // OR horizontally far from the notch (e.g. over the status bar items on the right),
         // instantly exit without calculating bounding boxes or scheduling timers.
-        if !vm.state.isExpanded && !vm.isDropTargeted && mouseLoc.y < geom.topY - 80 {
+        let activeWidth = vm.state.isExpanded ? IslandLayout.expandedSize(vm.activeTab).width : geom.width
+        let notchHalfWidth = activeWidth / 2 + 50
+        let isHorizontallyFar = abs(mouseLoc.x - geom.centerX) > notchHalfWidth
+        let isVerticallyFar = mouseLoc.y < geom.topY - (vm.state.isExpanded ? 240 : 80)
+        
+        if !vm.state.isExpanded && !vm.isDropTargeted && (isHorizontallyFar || isVerticallyFar) {
             if !panel.ignoresMouseEvents {
                 panel.ignoresMouseEvents = true
             }
