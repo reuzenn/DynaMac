@@ -102,6 +102,7 @@ public struct NotchContainerView: View {
                                 duration: settings.calibrationRGBSpeed.duration,
                                 isPaused: isPaused
                             )
+                            .frame(width: islandSize.width, height: islandSize.height, alignment: .top)
                         } else {
                             DynamicIslandShape(
                                 bottomCornerRadius: bottomRadius,

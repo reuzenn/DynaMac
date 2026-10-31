@@ -29,6 +29,8 @@ public struct RGBChromaBorderView: NSViewRepresentable {
 }
 
 public final class RGBChromaNSView: NSView {
+    public override var isFlipped: Bool { true }
+    
     private let gradientLayer = CAGradientLayer()
     private let maskLayer = CAShapeLayer()
     
@@ -49,6 +51,7 @@ public final class RGBChromaNSView: NSView {
     
     private func setupLayers() {
         wantsLayer = true
+        layer?.isGeometryFlipped = true
         layer?.masksToBounds = false
         
         gradientLayer.type = .conic
@@ -130,15 +133,18 @@ public final class RGBChromaNSView: NSView {
         if isCurrentlyPaused {
             gradientLayer.removeAnimation(forKey: "rgbSpinAnimation")
         } else {
-            if gradientLayer.animation(forKey: "rgbSpinAnimation") == nil {
-                let anim = CABasicAnimation(keyPath: "transform.rotation.z")
-                anim.fromValue = 0
-                anim.toValue = Double.pi * 2
-                anim.duration = currentDuration
-                anim.repeatCount = .infinity
-                anim.isRemovedOnCompletion = false
-                gradientLayer.add(anim, forKey: "rgbSpinAnimation")
+            if let existing = gradientLayer.animation(forKey: "rgbSpinAnimation") as? CABasicAnimation,
+               existing.duration == currentDuration {
+                return
             }
+            let anim = CABasicAnimation(keyPath: "transform.rotation.z")
+            anim.fromValue = 0
+            anim.toValue = Double.pi * 2
+            anim.duration = currentDuration
+            anim.repeatCount = .infinity
+            anim.isRemovedOnCompletion = false
+            gradientLayer.add(anim, forKey: "rgbSpinAnimation")
         }
     }
 }
+
