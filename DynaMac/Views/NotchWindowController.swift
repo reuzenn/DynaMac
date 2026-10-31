@@ -145,11 +145,24 @@ public final class NotchWindowController {
         guard let panel = panel else { return }
         let vm = NotchViewModel.shared
         let mouseLoc = NSEvent.mouseLocation
+        let geom = NotchManager.shared.currentGeometry
         
         // Volume/Brightness/Power HUD is purely visual overlay; never intercept mouse clicks
         if case .hud = vm.state, !vm.isDropTargeted {
             if !panel.ignoresMouseEvents {
                 panel.ignoresMouseEvents = true
+            }
+            return
+        }
+        
+        // Fast-path: When collapsed, if the cursor is anywhere below the menu bar notch region,
+        // instantly exit without calculating bounding boxes or scheduling timers.
+        if !vm.state.isExpanded && !vm.isDropTargeted && mouseLoc.y < geom.topY - 80 {
+            if !panel.ignoresMouseEvents {
+                panel.ignoresMouseEvents = true
+            }
+            if vm.isHovering {
+                vm.handleHoverChanged(false)
             }
             return
         }

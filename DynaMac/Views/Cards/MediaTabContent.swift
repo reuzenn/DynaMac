@@ -54,15 +54,15 @@ public struct MediaTabContent: View {
                 
                 Spacer()
                 
-                // Animated sound spectrum
-                HStack(alignment: .bottom, spacing: 3) {
-                    ForEach(0..<mediaService.audioLevels.count, id: \.self) { idx in
-                        RoundedRectangle(cornerRadius: 1.5)
-                            .fill(mediaService.isPlaying ? Color.pink.opacity(0.9) : Color.white.opacity(0.2))
-                            .frame(width: 3, height: mediaService.isPlaying ? max(4, mediaService.audioLevels[idx] * 20) : 3)
-                            .animation(.spring(response: 0.16, dampingFraction: 0.65), value: mediaService.audioLevels[idx])
-                    }
-                }
+                // GPU-accelerated animated sound spectrum (0% CPU)
+                EqualizerView(
+                    barCount: 5,
+                    isPlaying: mediaService.isPlaying,
+                    color: Color.pink.opacity(0.9),
+                    width: 3,
+                    minHeight: 4,
+                    maxHeight: 20
+                )
                 .frame(height: 20)
                 .opacity(mediaService.currentTrack.title.isEmpty ? 0 : 1)
             }

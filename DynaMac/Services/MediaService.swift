@@ -68,9 +68,8 @@ public final class MediaService: ObservableObject {
     
     @Published public private(set) var currentTrack: MediaTrack = .empty
     @Published public private(set) var isPlaying: Bool = false
-    @Published public private(set) var audioLevels: [CGFloat] = [0.05, 0.05, 0.05, 0.05, 0.05]
+    public let audioLevels: [CGFloat] = [0.05, 0.05, 0.05, 0.05, 0.05]
     
-    private var visualizerTimer: Timer?
     private var pollTimer: Timer?
     private let mrBridge = MediaRemoteBridge.shared
     
@@ -84,7 +83,7 @@ public final class MediaService: ObservableObject {
         setupObservers()
         updatePlaybackState()
         
-        // High-frequency tick for smooth live time progress and periodic playback check
+        // Lightweight tick for live time progress and periodic playback check
         let timer = Timer(timeInterval: 0.5, repeats: true) { [weak self] _ in
             self?.handleTimerTick()
         }
@@ -93,15 +92,17 @@ public final class MediaService: ObservableObject {
     }
     
     deinit {
-        visualizerTimer?.invalidate()
         pollTimer?.invalidate()
     }
     
     private func handleTimerTick() {
-        tickPlaybackProgress()
+        if isPlaying {
+            tickPlaybackProgress()
+        }
         
         tickCounter += 1
-        if tickCounter >= 3 { // Every 1.5 seconds, refresh state from system
+        let threshold = isPlaying ? 4 : 8 // 2s refresh when playing, 4s when idle
+        if tickCounter >= threshold {
             tickCounter = 0
             updatePlaybackState()
         }
@@ -292,7 +293,6 @@ public final class MediaService: ObservableObject {
             if self.currentTrack.isPlaying || !self.currentTrack.title.isEmpty {
                 self.currentTrack = .empty
                 self.isPlaying = false
-                self.stopVisualizer()
             }
         }
     }
@@ -301,12 +301,6 @@ public final class MediaService: ObservableObject {
         DispatchQueue.main.async {
             self.currentTrack = track
             self.isPlaying = track.isPlaying
-            
-            if track.isPlaying {
-                self.startVisualizer()
-            } else {
-                self.stopVisualizer()
-            }
         }
     }
     
@@ -600,22 +594,5 @@ public final class MediaService: ObservableObject {
             return NSImage(data: data)
         }
         return nil
-    }
-    
-    // MARK: - Audio Spectrum Simulation
-    private func startVisualizer() {
-        guard visualizerTimer == nil else { return }
-        visualizerTimer = Timer.scheduledTimer(withTimeInterval: 0.12, repeats: true) { [weak self] _ in
-            guard let self = self else { return }
-            self.audioLevels = (0..<5).map { _ in
-                CGFloat.random(in: 0.15...0.95)
-            }
-        }
-    }
-    
-    private func stopVisualizer() {
-        visualizerTimer?.invalidate()
-        visualizerTimer = nil
-        audioLevels = [0.05, 0.05, 0.05, 0.05, 0.05]
     }
 }

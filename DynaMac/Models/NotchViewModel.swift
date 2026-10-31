@@ -49,29 +49,34 @@ public final class NotchViewModel: ObservableObject {
     }
     
     private func setupHooks() {
-        // Observe live services so compact activity and island size update immediately
-        mediaService.objectWillChange
+        // Observe live service status toggles only (ignoring high-frequency time/audio mutations)
+        mediaService.$isPlaying
+            .removeDuplicates()
             .receive(on: DispatchQueue.main)
             .sink { [weak self] _ in
                 self?.objectWillChange.send()
             }
             .store(in: &cancellables)
             
-        shelfService.objectWillChange
+        shelfService.$items
+            .map { $0.isEmpty }
+            .removeDuplicates()
             .receive(on: DispatchQueue.main)
             .sink { [weak self] _ in
                 self?.objectWillChange.send()
             }
             .store(in: &cancellables)
             
-        timerService.objectWillChange
+        timerService.$isRunning
+            .removeDuplicates()
             .receive(on: DispatchQueue.main)
             .sink { [weak self] _ in
                 self?.objectWillChange.send()
             }
             .store(in: &cancellables)
             
-        batteryService.objectWillChange
+        batteryService.$isCharging
+            .removeDuplicates()
             .receive(on: DispatchQueue.main)
             .sink { [weak self] _ in
                 self?.objectWillChange.send()
@@ -269,6 +274,7 @@ public final class NotchViewModel: ObservableObject {
     // MARK: - Hover Logic
     public func handleHoverChanged(_ hovering: Bool) {
         guard settings.isHoverToExpandEnabled else { return }
+        guard self.isHovering != hovering else { return }
         if NSEvent.pressedMouseButtons != 0 { return }
         
         self.isHovering = hovering

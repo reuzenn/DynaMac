@@ -110,9 +110,6 @@ public struct NotchContainerView: View {
         }
         .frame(width: IslandLayout.panelSize.width, height: IslandLayout.panelSize.height, alignment: .top)
         .contentShape(Rectangle())
-        .onHover { isHovered in
-            viewModel.handleHoverChanged(isHovered)
-        }
         .simultaneousGesture(
             DragGesture(minimumDistance: 0)
                 .onChanged { _ in
@@ -192,15 +189,15 @@ public struct NotchContainerView: View {
                 HStack {
                     switch activity {
                     case .media:
-                        // Animated 3-bar sound spectrum
-                        HStack(alignment: .bottom, spacing: 2) {
-                            ForEach(0..<3, id: \.self) { idx in
-                                RoundedRectangle(cornerRadius: 1)
-                                    .fill(LinearGradient(colors: [.pink, .purple], startPoint: .top, endPoint: .bottom))
-                                    .frame(width: 2.5, height: max(3, mediaService.audioLevels[idx] * 12))
-                                    .animation(.spring(response: 0.16, dampingFraction: 0.65), value: mediaService.audioLevels[idx])
-                            }
-                        }
+                        // GPU-accelerated animated 3-bar sound spectrum (0% CPU)
+                        EqualizerView(
+                            barCount: 3,
+                            isPlaying: mediaService.isPlaying,
+                            gradient: LinearGradient(colors: [.pink, .purple], startPoint: .top, endPoint: .bottom),
+                            width: 2.5,
+                            minHeight: 3,
+                            maxHeight: 12
+                        )
                     case .timer:
                         Text(timerService.formattedTime)
                             .font(.system(size: 10, weight: .bold, design: .rounded))
