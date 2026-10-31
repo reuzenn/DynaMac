@@ -64,6 +64,17 @@ public final class NotchWindowController {
         ) { [weak self] _ in
             self?.repositionPanel()
         }
+        
+        // Window occlusion detection (pauses animations when notch is hidden/occluded)
+        NotificationCenter.default.addObserver(
+            forName: NSWindow.didChangeOcclusionStateNotification,
+            object: panel,
+            queue: .main
+        ) { [weak self] _ in
+            guard let panel = self?.panel else { return }
+            let isVisible = panel.occlusionState.contains(.visible)
+            DisplayStateService.shared.setWindowOccluded(!isVisible)
+        }
     }
     
     public func repositionPanel() {

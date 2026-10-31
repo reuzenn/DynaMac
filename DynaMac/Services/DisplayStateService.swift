@@ -10,6 +10,9 @@ public final class DisplayStateService: ObservableObject {
     /// True when display is awake and visible
     @Published public private(set) var isScreenAwake: Bool = true
     
+    /// True when the notch panel is occluded/hidden by another full-screen space or window
+    @Published public private(set) var isWindowOccluded: Bool = false
+    
     /// True when the user has been inactive for more than idleTimeout (3 minutes)
     @Published public private(set) var isUserIdle: Bool = false
     
@@ -82,10 +85,18 @@ public final class DisplayStateService: ObservableObject {
         }
     }
     
+    /// Called when the notch panel window visibility / occlusion state changes
+    public func setWindowOccluded(_ occluded: Bool) {
+        guard self.isWindowOccluded != occluded else { return }
+        self.isWindowOccluded = occluded
+        updatePausedState()
+    }
+    
     private func updatePausedState() {
-        let shouldPause = !isScreenAwake || isUserIdle
+        let shouldPause = !isScreenAwake || isWindowOccluded || isUserIdle
         if shouldPause != isAnimationPaused {
             self.isAnimationPaused = shouldPause
         }
     }
 }
+

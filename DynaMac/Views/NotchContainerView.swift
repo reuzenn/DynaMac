@@ -88,33 +88,20 @@ public struct NotchContainerView: View {
                 )
                 
                 // Hardware calibration guide (Custom color palette or smooth RGB animation)
-                // Capped strictly at 60 Hz when expanded, and 40 Hz when collapsed (zero 120 Hz).
-                // Auto-pauses and smoothly fades to 0% after 3 min user inactivity or screen sleep.
+                // 1 & 2: Pure GPU CoreAnimation (0.0% CPU) + Window Occlusion & Sleep detection
+                // 3 & 4: 3-minute inactivity auto-fade + automatic pause
+                // 5: Zero Gaussian blur filter overhead
                 if settings.showCalibrationOverlay {
-                    let targetInterval: Double = viewModel.state.isExpanded ? (1.0 / 60.0) : (1.0 / 40.0)
                     let isPaused = displayService.isAnimationPaused
                     
                     Group {
                         if settings.calibrationColor == .rgb {
-                            TimelineView(.animation(minimumInterval: targetInterval, paused: isPaused)) { timeline in
-                                let elapsed = timeline.date.timeIntervalSinceReferenceDate
-                                let duration = max(0.5, settings.calibrationRGBSpeed.duration)
-                                let progress = (elapsed.truncatingRemainder(dividingBy: duration)) / duration
-                                let angle = Angle(degrees: progress * 360)
-                                
-                                DynamicIslandShape(
-                                    bottomCornerRadius: bottomRadius,
-                                    isFloating: geom.isFloating
-                                )
-                                .stroke(
-                                    AngularGradient(
-                                        colors: [.red, .orange, .yellow, .green, .cyan, .blue, .purple, .pink, .red],
-                                        center: .center,
-                                        angle: angle
-                                    ),
-                                    lineWidth: 2.5
-                                )
-                            }
+                            RGBChromaBorderView(
+                                bottomRadius: bottomRadius,
+                                isFloating: geom.isFloating,
+                                duration: settings.calibrationRGBSpeed.duration,
+                                isPaused: isPaused
+                            )
                         } else {
                             DynamicIslandShape(
                                 bottomCornerRadius: bottomRadius,
