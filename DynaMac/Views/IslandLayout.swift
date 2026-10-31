@@ -21,10 +21,10 @@ enum IslandLayout {
 
     static func expandedSize(_ tab: NotchTab) -> CGSize {
         switch tab {
-        case .media:   return CGSize(width: 490, height: 215)
-        case .timer:   return CGSize(width: 490, height: 180)
-        case .shelf:   return CGSize(width: 490, height: 185)
-        case .battery: return CGSize(width: 490, height: 155)
+        case .media:   return CGSize(width: 500, height: 215)
+        case .timer:   return CGSize(width: 500, height: 180)
+        case .shelf:   return CGSize(width: 500, height: 185)
+        case .battery: return CGSize(width: 500, height: 155)
         }
     }
 

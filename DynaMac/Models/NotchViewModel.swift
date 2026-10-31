@@ -288,7 +288,7 @@ public final class NotchViewModel: ObservableObject {
             hoverDebounceTimer = Timer.scheduledTimer(withTimeInterval: 0.35, repeats: false) { [weak self] _ in
                 guard let self = self, self.isHovering else { return }
                 guard NSEvent.pressedMouseButtons == 0 else { return }
-                if self.state == .collapsed {
+                if case .collapsed = self.state {
                     self.expand()
                 }
             }

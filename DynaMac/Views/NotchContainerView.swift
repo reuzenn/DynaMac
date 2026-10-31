@@ -100,9 +100,17 @@ public struct NotchContainerView: View {
                         
                     case .expanded(let activeTab):
                         expandedDynamicIslandView(activeTab: activeTab)
-                            .transition(.opacity)
+                            .transition(
+                                reduceMotion
+                                    ? .opacity
+                                    : .asymmetric(
+                                        insertion: .opacity.combined(with: .scale(scale: 0.96, anchor: .top)),
+                                        removal: .opacity
+                                    )
+                            )
                     }
                 }
+                .frame(width: islandSize.width, height: islandSize.height, alignment: .top)
                 .clipShape(
                     DynamicIslandShape(
                         bottomCornerRadius: bottomRadius,
@@ -229,11 +237,13 @@ public struct NotchContainerView: View {
     
     // MARK: - iPhone Pro Max Dynamic Island Expanded Layout (Distributed Around Physical Notch)
     private func expandedDynamicIslandView(activeTab: NotchTab) -> some View {
-        VStack(spacing: 0) {
+        let targetSize = IslandLayout.expandedSize(activeTab)
+        
+        return VStack(spacing: 0) {
             // Top Ear Flanking Row (Distributed to the LEFT and RIGHT of the physical notch)
             HStack(spacing: 0) {
                 // LEFT EAR: Müzik & Dosya (Never covered by physical notch!)
-                HStack(spacing: 5) {
+                HStack(spacing: 4) {
                     tabHeaderPill(for: .media, icon: "music.note", title: l10n.t("tab_music"), tint: .pink)
                     tabHeaderPill(
                         for: .shelf,
@@ -243,14 +253,14 @@ public struct NotchContainerView: View {
                     )
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(.leading, 10)
+                .padding(.leading, 8)
                 
                 // PHYSICAL HARDWARE NOTCH (Camera, sensor, LED area - ZERO pixels rendered here!)
                 Color.clear
                     .frame(width: geom.width, height: geom.height)
                 
                 // RIGHT EAR: Sayaç & Pil + Kapatma (Never covered by physical notch!)
-                HStack(spacing: 5) {
+                HStack(spacing: 4) {
                     tabHeaderPill(
                         for: .timer,
                         icon: "timer",
@@ -272,13 +282,13 @@ public struct NotchContainerView: View {
                         Image(systemName: "chevron.up")
                             .font(.system(size: 9, weight: .bold))
                             .foregroundColor(.white.opacity(0.65))
-                            .padding(5)
+                            .padding(4.5)
                             .background(Circle().fill(Color.white.opacity(0.12)))
                     }
                     .buttonStyle(.fluidPress(scale: 0.90))
                 }
                 .frame(maxWidth: .infinity, alignment: .trailing)
-                .padding(.trailing, 10)
+                .padding(.trailing, 8)
             }
             .frame(height: geom.height)
             .padding(.top, 2)
@@ -321,6 +331,7 @@ public struct NotchContainerView: View {
             }
             .padding(.bottom, 6)
         }
+        .frame(width: targetSize.width, height: targetSize.height, alignment: .top)
     }
     
     private func tabHeaderPill(for tab: NotchTab, icon: String, title: String, tint: Color) -> some View {
@@ -337,8 +348,8 @@ public struct NotchContainerView: View {
                     .lineLimit(1)
             }
             .foregroundColor(viewModel.activeTab == tab ? .white : .white.opacity(0.65))
-            .padding(.horizontal, 7)
-            .padding(.vertical, 3.5)
+            .padding(.horizontal, 6)
+            .padding(.vertical, 3)
             .background(
                 Capsule()
                     .fill(viewModel.activeTab == tab ? Color.white.opacity(0.18) : Color.white.opacity(0.06))
