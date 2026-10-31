@@ -117,39 +117,14 @@ public final class NotchWindowController {
         }
     }
     
-    /// Calculate the broad area where file drops will trigger the dropping state
-    public func activeDropArea() -> NSRect {
-        let geom = NotchManager.shared.currentGeometry
-        let vm = NotchViewModel.shared
-        let size: CGSize
-        if vm.state.isExpanded {
-            size = IslandLayout.size(
-                state: vm.state,
-                compact: vm.compactActivity,
-                hovering: vm.isHovering,
-                stretch: vm.stretch,
-                geometry: geom
-            )
-        } else {
-            size = IslandLayout.dropZoneSize(geom)
-        }
-        
-        let pad: CGFloat = 16
-        let originX = geom.centerX - (size.width / 2) - pad
-        let originY = geom.topY - size.height - pad
-        let width = size.width + (pad * 2)
-        let height = size.height + (pad * 2)
-        return NSRect(x: originX, y: originY, width: width, height: height)
-    }
-
     /// Calculate the exact active bounding rect of the Dynamic Island in screen coordinates
     public func currentInteractiveRect() -> NSRect {
         let geom = NotchManager.shared.currentGeometry
         let vm = NotchViewModel.shared
         
         let islandSize: CGSize
-        if vm.isDropTargeted || vm.isFileDragActive {
-            islandSize = IslandLayout.dropZoneSize(geom)
+        if vm.isDropTargeted {
+            islandSize = IslandLayout.droppingSize(geom)
         } else {
             islandSize = IslandLayout.size(
                 state: vm.state,
@@ -160,14 +135,10 @@ public final class NotchWindowController {
             )
         }
         
-        // Add 4pt boundary padding for natural cursor approach
-        let pad: CGFloat = 4
-        let originX = geom.centerX - (islandSize.width / 2) - pad
-        let originY = geom.topY - islandSize.height - pad
-        let width = islandSize.width + (pad * 2)
-        let height = islandSize.height + (pad * 2)
-        
-        return NSRect(x: originX, y: originY, width: width, height: height)
+        // Exact geometry matching the physical notch and expanded capsule - zero oversized padding
+        let originX = geom.centerX - (islandSize.width / 2)
+        let originY = geom.topY - islandSize.height
+        return NSRect(x: originX, y: originY, width: islandSize.width, height: islandSize.height)
     }
     
     private func evaluateMousePosition(event: NSEvent) {
@@ -175,20 +146,24 @@ public final class NotchWindowController {
         let vm = NotchViewModel.shared
         let mouseLoc = NSEvent.mouseLocation
         
+        // Guard: If mouse button is held down while collapsed and not in a drop session,
+        // the user is dragging a window from another application. Never intercept window movements.
+        if NSEvent.pressedMouseButtons != 0 && !vm.state.isExpanded && !vm.isDropTargeted {
+            if !panel.ignoresMouseEvents {
+                panel.ignoresMouseEvents = true
+            }
+            return
+        }
+        
         let interactiveRect = currentInteractiveRect()
         let isInside = interactiveRect.contains(mouseLoc)
-        let inDropZone = activeDropArea().contains(mouseLoc)
         
-        if isInside || inDropZone {
-            // Enable mouse events when approaching the active island or drop zone
+        if isInside {
             if panel.ignoresMouseEvents {
                 panel.ignoresMouseEvents = false
             }
-            if isInside {
-                vm.handleHoverChanged(true)
-            }
+            vm.handleHoverChanged(true)
         } else {
-            // Cursor is outside the Dynamic Island capsule and drop zone
             if !vm.isDropTargeted {
                 if !panel.ignoresMouseEvents {
                     panel.ignoresMouseEvents = true

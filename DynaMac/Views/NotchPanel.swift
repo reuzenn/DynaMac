@@ -36,7 +36,7 @@ public class IslandHostingView<Content: View>: NSHostingView<Content> {
     public override func draggingEntered(_ sender: NSDraggingInfo) -> NSDragOperation {
         guard hasFileURLs(in: sender.draggingPasteboard) else { return [] }
         let screenPoint = NSEvent.mouseLocation
-        let zone = NotchWindowController.shared.activeDropArea()
+        let zone = NotchWindowController.shared.currentInteractiveRect()
         
         if zone.contains(screenPoint) {
             DispatchQueue.main.async {
@@ -50,7 +50,7 @@ public class IslandHostingView<Content: View>: NSHostingView<Content> {
     public override func draggingUpdated(_ sender: NSDraggingInfo) -> NSDragOperation {
         guard hasFileURLs(in: sender.draggingPasteboard) else { return [] }
         let screenPoint = NSEvent.mouseLocation
-        let zone = NotchWindowController.shared.activeDropArea()
+        let zone = NotchWindowController.shared.currentInteractiveRect()
         
         if zone.contains(screenPoint) {
             if !NotchViewModel.shared.isDropTargeted {
