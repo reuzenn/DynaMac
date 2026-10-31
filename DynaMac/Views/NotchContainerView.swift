@@ -9,6 +9,7 @@ public struct NotchContainerView: View {
     @ObservedObject var shelfService = ShelfService.shared
     @ObservedObject var batteryService = BatteryService.shared
     @ObservedObject var timerService = TimerService.shared
+    @ObservedObject var displayService = DisplayStateService.shared
     @ObservedObject var l10n = LocalizationManager.shared
     @Environment(\.accessibilityReduceMotion) var reduceMotion
     
@@ -87,37 +88,43 @@ public struct NotchContainerView: View {
                 )
                 
                 // Hardware calibration guide (Custom color palette or smooth RGB animation)
-                // When collapsed (expand is closed), cap RGB cycle to 60 Hz (1.0 / 60.0) to save CPU/GPU and battery
+                // Capped strictly at 60 Hz when expanded, and 40 Hz when collapsed (zero 120 Hz).
+                // Auto-pauses and smoothly fades to 0% after 3 min user inactivity or screen sleep.
                 if settings.showCalibrationOverlay {
-                    if settings.calibrationColor == .rgb {
-                        TimelineView(.animation(minimumInterval: viewModel.state.isExpanded ? nil : (1.0 / 60.0))) { timeline in
-                            let elapsed = timeline.date.timeIntervalSinceReferenceDate
-                            let duration = max(0.5, settings.calibrationRGBSpeed.duration)
-                            let progress = (elapsed.truncatingRemainder(dividingBy: duration)) / duration
-                            let angle = Angle(degrees: progress * 360)
-                            
+                    let targetInterval: Double = viewModel.state.isExpanded ? (1.0 / 60.0) : (1.0 / 40.0)
+                    let isPaused = displayService.isAnimationPaused
+                    
+                    Group {
+                        if settings.calibrationColor == .rgb {
+                            TimelineView(.animation(minimumInterval: targetInterval, paused: isPaused)) { timeline in
+                                let elapsed = timeline.date.timeIntervalSinceReferenceDate
+                                let duration = max(0.5, settings.calibrationRGBSpeed.duration)
+                                let progress = (elapsed.truncatingRemainder(dividingBy: duration)) / duration
+                                let angle = Angle(degrees: progress * 360)
+                                
+                                DynamicIslandShape(
+                                    bottomCornerRadius: bottomRadius,
+                                    isFloating: geom.isFloating
+                                )
+                                .stroke(
+                                    AngularGradient(
+                                        colors: [.red, .orange, .yellow, .green, .cyan, .blue, .purple, .pink, .red],
+                                        center: .center,
+                                        angle: angle
+                                    ),
+                                    lineWidth: 2.5
+                                )
+                            }
+                        } else {
                             DynamicIslandShape(
                                 bottomCornerRadius: bottomRadius,
                                 isFloating: geom.isFloating
                             )
-                            .stroke(
-                                AngularGradient(
-                                    colors: [.red, .orange, .yellow, .green, .cyan, .blue, .purple, .pink, .red],
-                                    center: .center,
-                                    angle: angle
-                                ),
-                                lineWidth: 2.5
-                            )
-                            .shadow(color: Color.purple.opacity(0.25), radius: 2)
+                            .stroke(settings.calibrationColor.color, lineWidth: 2)
                         }
-                    } else {
-                        DynamicIslandShape(
-                            bottomCornerRadius: bottomRadius,
-                            isFloating: geom.isFloating
-                        )
-                        .stroke(settings.calibrationColor.color, lineWidth: 2)
-                        .shadow(color: settings.calibrationColor.color.opacity(0.35), radius: 2)
                     }
+                    .opacity(displayService.isUserIdle ? 0.0 : 1.0)
+                    .animation(.easeInOut(duration: 0.8), value: displayService.isUserIdle)
                 }
                 
             }

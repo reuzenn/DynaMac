@@ -82,12 +82,14 @@ public final class NotchWindowController {
     private func setupEventMonitors() {
         // Global mouse movement & drag tracking
         globalMouseMonitor = NSEvent.addGlobalMonitorForEvents(matching: [.mouseMoved, .leftMouseDragged]) { [weak self] event in
+            DisplayStateService.shared.userDidInteract()
             guard !StatusBarController.shared.isMenuOpen else { return }
             self?.evaluateMousePosition(event: event)
         }
         
         // Local mouse movement & drag tracking (restricted solely to the notch panel)
         localMouseMonitor = NSEvent.addLocalMonitorForEvents(matching: [.mouseMoved, .leftMouseDragged]) { [weak self] event in
+            DisplayStateService.shared.userDidInteract()
             // When status bar dropdown menu is open, let AppKit track it at full native speed with zero interference
             guard !StatusBarController.shared.isMenuOpen else { return event }
             guard let self = self, let panel = self.panel else { return event }
@@ -101,6 +103,7 @@ public final class NotchWindowController {
         
         // Outside click detector when expanded
         globalClickMonitor = NSEvent.addGlobalMonitorForEvents(matching: [.leftMouseDown, .rightMouseDown]) { [weak self] event in
+            DisplayStateService.shared.userDidInteract()
             guard !StatusBarController.shared.isMenuOpen else { return }
             guard let self = self else { return }
             let vm = NotchViewModel.shared
@@ -116,6 +119,7 @@ public final class NotchWindowController {
         
         // ESC key detector to collapse
         localKeyMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { event in
+            DisplayStateService.shared.userDidInteract()
             if event.keyCode == 53 { // ESC key
                 if NotchViewModel.shared.state.isExpanded {
                     NotchViewModel.shared.collapse()

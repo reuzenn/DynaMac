@@ -67,7 +67,12 @@ public final class MediaService: ObservableObject {
     public static let shared = MediaService()
     
     @Published public private(set) var currentTrack: MediaTrack = .empty
-    @Published public private(set) var isPlaying: Bool = false
+    @Published public private(set) var isPlaying: Bool = false {
+        didSet {
+            guard oldValue != isPlaying else { return }
+            updateTimerState()
+        }
+    }
     public let audioLevels: [CGFloat] = [0.05, 0.05, 0.05, 0.05, 0.05]
     
     private var pollTimer: Timer?
@@ -92,17 +97,26 @@ public final class MediaService: ObservableObject {
     private init() {
         setupObservers()
         updatePlaybackState()
-        
-        // Lightweight tick for live time progress and periodic playback check
-        let timer = Timer(timeInterval: 0.5, repeats: true) { [weak self] _ in
-            self?.handleTimerTick()
-        }
-        RunLoop.main.add(timer, forMode: .common)
-        self.pollTimer = timer
+        updateTimerState()
     }
     
     deinit {
         pollTimer?.invalidate()
+    }
+    
+    /// Event-driven timer: only runs while media is actively playing, zero idle CPU when paused
+    private func updateTimerState() {
+        if isPlaying {
+            guard pollTimer == nil else { return }
+            let timer = Timer(timeInterval: 0.5, repeats: true) { [weak self] _ in
+                self?.handleTimerTick()
+            }
+            RunLoop.main.add(timer, forMode: .common)
+            self.pollTimer = timer
+        } else {
+            pollTimer?.invalidate()
+            pollTimer = nil
+        }
     }
     
     private func handleTimerTick() {
