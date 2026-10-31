@@ -107,6 +107,4 @@ DynaMac operates locally without network requirements or external telemetry. To 
 * Apple Events / Automation: Required to query playback status and dispatch media control events to Safari, Spotify, and Apple Music.
 * Accessibility (Optional): Required for automatic window drag detection.
 
-## License
-
-This project is licensed under the MIT License. See the LICENSE file for details.
+Developed by reuzen.
