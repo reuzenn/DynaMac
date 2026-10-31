@@ -1,0 +1,26 @@
+# Xcode & Swift Build Artifacts
+build/
+DerivedData/
+*.xcuserdatad
+xcuserdata/
+*.xcworkspace
+!*.xcodeproj/project.pbxproj
+!*.xcodeproj/xcshareddata/
+
+# Binaries & Applications
+*.app/
+.build/
+
+# macOS System Files
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+.Spotlight-V100
+.Trashes
+
+# Editor Temp Files
+*~
+*.swp
+*.swo
+
