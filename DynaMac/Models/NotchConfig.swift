@@ -1,6 +1,51 @@
 import Foundation
 import AppKit
+import SwiftUI
 import Combine
+
+/// Color and animation mode for the notch alignment calibration guide
+public enum CalibrationColorMode: String, CaseIterable, Identifiable, Codable {
+    case orange = "orange"
+    case cyan = "cyan"
+    case green = "green"
+    case purple = "purple"
+    case red = "red"
+    case yellow = "yellow"
+    case white = "white"
+    case rgb = "rgb"
+    
+    public var id: String { rawValue }
+    
+    public var color: Color {
+        switch self {
+        case .orange: return .orange
+        case .cyan: return .cyan
+        case .green: return .green
+        case .purple: return .purple
+        case .red: return .red
+        case .yellow: return .yellow
+        case .white: return .white
+        case .rgb: return .clear
+        }
+    }
+}
+
+/// Rotation speed settings for smooth RGB rainbow cycle
+public enum RGBCycleSpeed: String, CaseIterable, Identifiable, Codable {
+    case slow = "slow"
+    case normal = "normal"
+    case fast = "fast"
+    
+    public var id: String { rawValue }
+    
+    public var duration: Double {
+        switch self {
+        case .slow: return 6.0
+        case .normal: return 3.0
+        case .fast: return 1.2
+        }
+    }
+}
 
 /// Model presets for MacBook notch hardware across all Apple Silicon generations (M1 to M6+)
 public enum MacBookNotchPreset: String, CaseIterable, Identifiable, Codable {
@@ -120,7 +165,17 @@ public final class NotchSettings: ObservableObject {
         didSet { UserDefaults.standard.set(isHapticsEnabled, forKey: "feat_haptics") }
     }
     
-    @Published public var showCalibrationOverlay: Bool = false
+    @Published public var showCalibrationOverlay: Bool {
+        didSet { UserDefaults.standard.set(showCalibrationOverlay, forKey: "calib_showOverlay") }
+    }
+    
+    @Published public var calibrationColor: CalibrationColorMode {
+        didSet { UserDefaults.standard.set(calibrationColor.rawValue, forKey: "calib_color") }
+    }
+    
+    @Published public var calibrationRGBSpeed: RGBCycleSpeed {
+        didSet { UserDefaults.standard.set(calibrationRGBSpeed.rawValue, forKey: "calib_rgb_speed") }
+    }
     
     @Published public var launchAtLogin: Bool {
         didSet { UserDefaults.standard.set(launchAtLogin, forKey: "launch_at_login") }
@@ -145,6 +200,12 @@ public final class NotchSettings: ObservableObject {
         self.showCollapsedEars = UserDefaults.standard.object(forKey: "feat_ears") == nil ? true : UserDefaults.standard.bool(forKey: "feat_ears")
         self.isHapticsEnabled = UserDefaults.standard.bool(forKey: "feat_haptics") // Defaults to false (off)
         self.launchAtLogin = UserDefaults.standard.bool(forKey: "launch_at_login")
+        
+        self.showCalibrationOverlay = UserDefaults.standard.bool(forKey: "calib_showOverlay")
+        let savedColor = UserDefaults.standard.string(forKey: "calib_color") ?? CalibrationColorMode.orange.rawValue
+        self.calibrationColor = CalibrationColorMode(rawValue: savedColor) ?? .orange
+        let savedSpeed = UserDefaults.standard.string(forKey: "calib_rgb_speed") ?? RGBCycleSpeed.normal.rawValue
+        self.calibrationRGBSpeed = RGBCycleSpeed(rawValue: savedSpeed) ?? .normal
     }
 }
 

@@ -175,19 +175,139 @@ struct CalibrationSettingsTab: View {
     @ObservedObject var notchManager = NotchManager.shared
     @ObservedObject var l10n = LocalizationManager.shared
     
+    private let solidColors: [CalibrationColorMode] = [
+        .orange, .cyan, .green, .purple, .red, .yellow, .white
+    ]
+    
     var body: some View {
         ScrollView(.vertical, showsIndicators: false) {
             VStack(alignment: .leading, spacing: 14) {
                 settingsCard {
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text(l10n.t("calibration_title"))
-                            .font(.headline)
-                        Text(l10n.t("calibration_sub"))
-                            .font(.caption)
-                            .foregroundColor(.secondary)
+                    VStack(alignment: .leading, spacing: 12) {
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text(l10n.t("calibration_title"))
+                                .font(.headline)
+                            Text(l10n.t("calibration_sub"))
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                        }
                         
                         Toggle(l10n.t("visual_outline"), isOn: $settings.showCalibrationOverlay)
-                            .padding(.top, 4)
+                            .padding(.top, 2)
+                        
+                        if settings.showCalibrationOverlay {
+                            Divider()
+                                .padding(.vertical, 2)
+                            
+                            VStack(alignment: .leading, spacing: 10) {
+                                Text(l10n.t("outline_color_mode"))
+                                    .font(.subheadline)
+                                    .foregroundColor(.secondary)
+                                
+                                HStack(spacing: 8) {
+                                    // Solid Color Swatches
+                                    ForEach(solidColors) { mode in
+                                        Button(action: {
+                                            HapticService.play(.tap)
+                                            withAnimation(.easeInOut(duration: 0.2)) {
+                                                settings.calibrationColor = mode
+                                            }
+                                        }) {
+                                            ZStack {
+                                                Circle()
+                                                    .fill(mode.color)
+                                                    .frame(width: 22, height: 22)
+                                                
+                                                if settings.calibrationColor == mode {
+                                                    Circle()
+                                                        .strokeBorder(Color.white, lineWidth: 2)
+                                                        .frame(width: 26, height: 26)
+                                                    
+                                                    Image(systemName: "checkmark")
+                                                        .font(.system(size: 10, weight: .bold))
+                                                        .foregroundColor(mode == .white || mode == .yellow ? .black : .white)
+                                                }
+                                            }
+                                            .frame(width: 28, height: 28)
+                                        }
+                                        .buttonStyle(.plain)
+                                    }
+                                    
+                                    Spacer(minLength: 8)
+                                    
+                                    // RGB Smooth Rainbow Mode Swatch & Pill
+                                    Button(action: {
+                                        HapticService.play(.tap)
+                                        withAnimation(.easeInOut(duration: 0.2)) {
+                                            settings.calibrationColor = .rgb
+                                        }
+                                    }) {
+                                        HStack(spacing: 6) {
+                                            ZStack {
+                                                Circle()
+                                                    .fill(
+                                                        AngularGradient(
+                                                            colors: [.red, .orange, .yellow, .green, .cyan, .blue, .purple, .pink, .red],
+                                                            center: .center
+                                                        )
+                                                    )
+                                                    .frame(width: 22, height: 22)
+                                                
+                                                if settings.calibrationColor == .rgb {
+                                                    Circle()
+                                                        .strokeBorder(Color.white, lineWidth: 2)
+                                                        .frame(width: 26, height: 26)
+                                                    
+                                                    Image(systemName: "sparkles")
+                                                        .font(.system(size: 9, weight: .bold))
+                                                        .foregroundColor(.white)
+                                                }
+                                            }
+                                            .frame(width: 28, height: 28)
+                                            
+                                            Text(l10n.t("rgb_cycle"))
+                                                .font(.caption)
+                                                .fontWeight(settings.calibrationColor == .rgb ? .semibold : .regular)
+                                                .foregroundColor(settings.calibrationColor == .rgb ? .primary : .secondary)
+                                        }
+                                        .padding(.horizontal, 8)
+                                        .padding(.vertical, 4)
+                                        .background(
+                                            RoundedRectangle(cornerRadius: 8)
+                                                .fill(settings.calibrationColor == .rgb ? Color.white.opacity(0.12) : Color.white.opacity(0.04))
+                                        )
+                                        .overlay(
+                                            RoundedRectangle(cornerRadius: 8)
+                                                .strokeBorder(
+                                                    settings.calibrationColor == .rgb ? Color.accentColor.opacity(0.6) : Color.white.opacity(0.08),
+                                                    lineWidth: 1
+                                                )
+                                        )
+                                    }
+                                    .buttonStyle(.plain)
+                                }
+                                
+                                // RGB Speed Segmented Picker
+                                if settings.calibrationColor == .rgb {
+                                    HStack(spacing: 12) {
+                                        Text(l10n.t("rgb_speed"))
+                                            .font(.caption)
+                                            .foregroundColor(.secondary)
+                                            .frame(width: 120, alignment: .leading)
+                                        
+                                        Picker("", selection: $settings.calibrationRGBSpeed) {
+                                            Text(l10n.t("speed_slow")).tag(RGBCycleSpeed.slow)
+                                            Text(l10n.t("speed_normal")).tag(RGBCycleSpeed.normal)
+                                            Text(l10n.t("speed_fast")).tag(RGBCycleSpeed.fast)
+                                        }
+                                        .pickerStyle(.segmented)
+                                        .frame(maxWidth: 220)
+                                    }
+                                    .padding(.top, 4)
+                                    .transition(.opacity.combined(with: .move(edge: .top)))
+                                }
+                            }
+                        }
                     }
                 }
                 

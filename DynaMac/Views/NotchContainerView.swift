@@ -86,14 +86,37 @@ public struct NotchContainerView: View {
                     lineWidth: 1
                 )
                 
-                // Hardware calibration guide (Orange outline when active in Settings)
+                // Hardware calibration guide (Custom color palette or smooth RGB animation)
                 if settings.showCalibrationOverlay {
-                    DynamicIslandShape(
-                        bottomCornerRadius: bottomRadius,
-                        isFloating: geom.isFloating,
-                        topCornerRadius: 0
-                    )
-                    .stroke(Color.orange, lineWidth: 2)
+                    if settings.calibrationColor == .rgb {
+                        TimelineView(.animation) { timeline in
+                            let elapsed = timeline.date.timeIntervalSinceReferenceDate
+                            let duration = max(0.5, settings.calibrationRGBSpeed.duration)
+                            let progress = (elapsed.truncatingRemainder(dividingBy: duration)) / duration
+                            let angle = Angle(degrees: progress * 360)
+                            
+                            DynamicIslandShape(
+                                bottomCornerRadius: bottomRadius,
+                                isFloating: geom.isFloating
+                            )
+                            .stroke(
+                                AngularGradient(
+                                    colors: [.red, .orange, .yellow, .green, .cyan, .blue, .purple, .pink, .red],
+                                    center: .center,
+                                    angle: angle
+                                ),
+                                lineWidth: 2.5
+                            )
+                            .shadow(color: Color.purple.opacity(0.35), radius: 3)
+                        }
+                    } else {
+                        DynamicIslandShape(
+                            bottomCornerRadius: bottomRadius,
+                            isFloating: geom.isFloating
+                        )
+                        .stroke(settings.calibrationColor.color, lineWidth: 2)
+                        .shadow(color: settings.calibrationColor.color.opacity(0.35), radius: 2)
+                    }
                 }
                 
             }
