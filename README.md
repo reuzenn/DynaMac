@@ -80,37 +80,6 @@ Upon execution, the script performs the following operations:
 
 ## Application Architecture
 
-```text
-DynaMac/
-|-- App/
-|   \-- AppDelegate.swift               # Application lifecycle and accessory mode initialization
-|-- Models/
-|   |-- MediaTrack.swift                # Playback data structures
-|   |-- NotchConfig.swift               # Hardware geometry definitions and presets
-|   |-- NotchState.swift                # Presentation and tab enumeration states
-|   \-- NotchViewModel.swift            # Central state coordination and gesture handling
-|-- Services/
-|   |-- AudioService.swift              # CoreAudio volume observation
-|   |-- BatteryService.swift            # IOKit power source telemetry
-|   |-- HapticService.swift             # NSHapticFeedbackManager integration
-|   |-- LocalizationManager.swift       # Multi-language string catalogs
-|   |-- MediaService.swift              # MediaRemote bridge and player coordination
-|   |-- NotchManager.swift              # Screen parameter observation and notch detection
-|   |-- ShelfService.swift              # Drag-and-drop file staging management
-|   \-- TimerService.swift              # High-resolution focus countdown timer
-\-- Views/
-    |-- Cards/                          # Expanded tab content cards (Media, Shelf, Timer, Battery)
-    |-- FluidComponents.swift           # Button styles and visual modifiers
-    |-- HUDView.swift                   # System volume and brightness overlay heads-up display
-    |-- IslandLayout.swift              # Dimension rules and spring animation parameters
-    |-- NotchContainerView.swift        # Primary Dynamic Island view hierarchy
-    |-- NotchPanel.swift                # Non-activating transparent overlay window
-    |-- NotchShape.swift                # Custom Bezier shape for bezel-aligned capsule
-    |-- NotchWindowController.swift     # Window positioning, mouse tracking, and hit-testing
-    |-- SettingsView.swift              # User configuration and calibration panel
-    \-- StatusBarController.swift       # Menu bar icon and quick access menu
-```
-
 ## Privacy and Permissions
 
 DynaMac operates locally without network requirements or external telemetry. To provide system integration, it requests standard macOS permissions:
