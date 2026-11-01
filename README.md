@@ -1,4 +1,4 @@
-# DynaMac (v1.6 - Last Stable)
+# DynaMac
 
 DynaMac is a native macOS utility that transforms the MacBook camera notch and menu bar into an interactive, context-aware Dynamic Island. It surfaces live system telemetry, media controls, quick file staging, and productivity tools directly from the display bezel.
 
